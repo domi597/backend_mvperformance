@@ -1,7 +1,11 @@
 package at.htlkaindorf.backend_mwperformence.repositories;
 
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
+import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -12,4 +16,6 @@ import java.util.List;
  * Time: 11:10
  */
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+    @Query("SELECT a FROM Appointment a WHERE a.status = :status")
+    Page<Appointment> findByStatus(AppointmentStatus status, Pageable pageable);
 }
