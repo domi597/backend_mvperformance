@@ -1,6 +1,7 @@
 package at.htlkaindorf.backend_mwperformence.controller;
 
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
+import at.htlkaindorf.backend_mwperformence.dtos.StatusUpdateRequest;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
 import at.htlkaindorf.backend_mwperformence.services.AppointmentService;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,17 +36,45 @@ public class AppointmentController {
      * @param size   Number of appointments per page (default: 10)
      */
 
+    // GET /api/appointments?status=NEU&page=0&size=5
     @GetMapping
     public ResponseEntity<Page<AppointmentDTO>> getAppointments(
             @RequestParam(required = false) AppointmentStatus status,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by("preferredDate").ascending());
 
         if (status != null) {
             return ResponseEntity.ok(appointmentService.getByStatus(status, pageable));
         }
         return ResponseEntity.ok(appointmentService.getAllAppointments(pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AppointmentDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(appointmentService.getById(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentDTO dto) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(appointmentService.create(dto));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AppointmentDTO> updateStatus(
+            @PathVariable Long id,
+            @RequestBody StatusUpdateRequest request) {
+        return ResponseEntity.ok(
+                appointmentService.updateStatus(id, request.getStatus()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        appointmentService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

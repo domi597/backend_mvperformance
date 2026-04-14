@@ -34,7 +34,7 @@ public class Service {
     private String subtitle;
 
     @Column(nullable = false)
-    private Integer sort;
+    private Double price;
 
     @OneToMany(mappedBy = "service", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
     @ToString.Exclude

@@ -31,7 +31,7 @@ public class Appointment {
     private String serviceType;
 
     @Column(nullable = false)
-    private String vehicle;
+    private String vehicle; // Anzeige-String (z.B. "VW Golf")
 
     @Column(name = "preferred_date", nullable = false)
     private LocalDateTime preferredDate;
@@ -40,6 +40,14 @@ public class Appointment {
     @Column(nullable = false, length = 30)
     private AppointmentStatus status = AppointmentStatus.NEU;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private Double price;
+
+    @Column(columnDefinition = "TEXT") // Für längere Anmerkungen
+    private String note;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinColumn(name = "user_id")
@@ -58,4 +66,11 @@ public class Appointment {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Service service;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
