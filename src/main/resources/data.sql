@@ -1,6 +1,22 @@
+-- ============================================================
+-- Clean all tables (child → parent order) and reset sequences
+-- ============================================================
+TRUNCATE TABLE
+    opening_hours,
+    contact_info,
+    reviews,
+    appointments,
+    offer_services,
+    offers,
+    services,
+    vehicles,
+    users
+RESTART IDENTITY CASCADE;
+
+-- ============================================================
 -- 1. USERS
 INSERT INTO users (id, first_name, last_name, email, password_hash, phone, street, city, role, created_at)
-VALUES (1, 'Max', 'Mustermann', 'admin@mwperformance.at', '$2a$10$examplehashadmin', '+43 664 1234567', 'Werkstattstraße 1', 'Graz', 'ADMIN', CURRENT_TIMESTAMP);
+VALUES (1, 'Max', 'Mustermann', 'admin@mwperformance.at', '$2y$10$..iVgU.UYVDvYuW8NLokEONtpdp/Rtck/qAnzFGq.bksPgOId9zwq', '+43 664 1234567', 'Werkstattstraße 1', 'Graz', 'ADMIN', CURRENT_TIMESTAMP);
 
 INSERT INTO users (id, first_name, last_name, email, password_hash, phone, street, city, role, created_at)
 VALUES (2, 'Thomas', 'Kauer', 'thomas.kauer@gmail.com', '$2a$10$examplehash1', '+43 699 1111111', 'Hauptstraße 5', 'Graz', 'CUSTOMER', CURRENT_TIMESTAMP);

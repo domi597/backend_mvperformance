@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * Servlet filter that runs once per request to validate a JWT bearer token.
- * <p>
+ *
  * If a valid {@code Authorization: Bearer <token>} header is present, the filter
  * extracts the user's e-mail from the token, loads the corresponding user from the
  * database and stores a {@link UsernamePasswordAuthenticationToken} in the
@@ -25,7 +25,7 @@ import java.util.List;
  * Requests without a token or with an invalid/expired token are forwarded unchanged
  * (they may still be rejected later by the security filter chain if the endpoint
  * requires authentication).
- * </p>
+ *
  */
 @Component
 @RequiredArgsConstructor

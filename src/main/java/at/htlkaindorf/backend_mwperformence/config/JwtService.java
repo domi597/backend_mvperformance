@@ -12,11 +12,11 @@ import java.util.Date;
 
 /**
  * Service responsible for creating and validating JSON Web Tokens (JWT).
- * <p>
+ *
  * Tokens are signed with an HMAC-SHA key derived from the configured secret and
  * carry the user's e-mail address as the subject claim. The expiration time can be
  * controlled via the {@code jwt.expiration-ms} property (default: 86 400 000 ms = 24 h).
- * </p>
+ *
  */
 @Service
 public class JwtService {

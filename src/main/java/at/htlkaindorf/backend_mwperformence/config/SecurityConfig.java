@@ -15,21 +15,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 /**
  * Central Spring Security configuration for the application.
- * <p>
+ *
  * Defines the HTTP security rules:
- * <ul>
- *   <li>CSRF protection is disabled because the API is stateless and uses JWT.</li>
- *   <li>Session management is set to {@link SessionCreationPolicy#STATELESS}; no
+ *
+ *   CSRF protection is disabled because the API is stateless and uses JWT.</li>
+ *   Session management is set to {@link SessionCreationPolicy#STATELESS}; no
  *       HTTP session is created or used.</li>
- *   <li>Public endpoints (auth, services, offers, opening hours, contact info,
+ *   Public endpoints (auth, services, offers, opening hours, contact info,
  *       reviews, Swagger UI, Actuator) are accessible without authentication.</li>
- *   <li>The {@code /api/users/**} endpoints are restricted to users with the
+ *   The {@code /api/users/**} endpoints are restricted to users with the
  *       {@code ADMIN} role.</li>
- *   <li>All other endpoints require a valid JWT.</li>
- * </ul>
+ *   All other endpoints require a valid JWT.</li>
+ *
  * The {@link JwtAuthenticationFilter} is inserted before the default
  * {@link UsernamePasswordAuthenticationFilter} so JWT tokens are evaluated first.
- * </p>
+ *
  */
 @Configuration
 @RequiredArgsConstructor
@@ -51,7 +51,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Öffentliche Endpunkte
+                // Public endpoints
                 .requestMatchers(
                     "/api/auth/**",
                     "/api/services/**",
@@ -63,9 +63,9 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/actuator/**"
                 ).permitAll()
-                // Admin-only
+                // Admin-only endpoints
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
-                // Alles andere braucht Login
+                // Everything else requires authentication
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

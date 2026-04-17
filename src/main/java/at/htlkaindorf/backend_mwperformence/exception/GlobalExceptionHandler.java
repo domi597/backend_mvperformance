@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .findFirst()
-                .orElse("Ungültige Eingabe");
+                .orElse("Invalid input");
 
         return ResponseEntity.badRequest().body(Map.of(
                 "timestamp", LocalDateTime.now().toString(),
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(Map.of(
                 "timestamp", LocalDateTime.now().toString(),
                 "status", 403,
-                "error", "Zugriff verweigert"
+                "error", "Access denied"
         ));
     }
 }

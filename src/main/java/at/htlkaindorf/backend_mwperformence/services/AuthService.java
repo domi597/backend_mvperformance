@@ -19,6 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 
+/**
+ * Service responsible for user authentication and registration.
+ * <p>
+ * Handles credential verification during login and account creation during registration.
+ * On success, both operations return a signed JWT together with basic user information.
+ * </p>
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -29,7 +36,12 @@ public class AuthService {
     private final JwtService jwtService;
 
     /**
-     * Login: E-Mail und Passwort prüfen, JWT zurückgeben.
+     * Authenticates a user by verifying their e-mail and password.
+     * Throws an {@link ApiException} with status {@code 404} if no account is found
+     * for the given e-mail, or {@code 401} if the password does not match.
+     *
+     * @param request the login credentials
+     * @return an {@link AuthResponse} containing a signed JWT and the user's profile data
      */
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -48,7 +60,13 @@ public class AuthService {
     }
 
     /**
-     * Registrierung: neuen User anlegen, optional ein Fahrzeug mitanlegen.
+     * Registers a new customer account with the role {@code CUSTOMER}.
+     * If {@code vehicleBrand} and {@code vehicleModel} are both provided and non-blank
+     * in the request, a {@link Vehicle} is created and linked to the new user.
+     * Throws an {@link ApiException} with status {@code 409} if the e-mail is already taken.
+     *
+     * @param request the registration data including personal details and optional vehicle information
+     * @return an {@link AuthResponse} containing a signed JWT and the newly created user's profile data
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -72,7 +90,7 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        // Optionales Fahrzeug anlegen, wenn Marke und Modell angegeben
+        // Optionally create a vehicle if brand and model are provided
         if (request.getVehicleBrand() != null && !request.getVehicleBrand().isBlank()
                 && request.getVehicleModel() != null && !request.getVehicleModel().isBlank()) {
 
@@ -96,6 +114,12 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Maps a {@link User} entity to a {@link UserDTO} for use in API responses.
+     *
+     * @param user the entity to map
+     * @return a lightweight DTO representation of the user
+     */
     private UserDTO toDTO(User user) {
         return UserDTO.builder()
                 .id(user.getId())
