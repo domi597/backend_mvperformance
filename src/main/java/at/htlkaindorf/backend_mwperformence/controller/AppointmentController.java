@@ -1,7 +1,6 @@
 package at.htlkaindorf.backend_mwperformence.controller;
 
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
-import at.htlkaindorf.backend_mwperformence.dtos.StatusUpdateRequest;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
 import at.htlkaindorf.backend_mwperformence.services.AppointmentService;
@@ -9,18 +8,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Project: backend_MWPerformence
- * Created by: Dominik Ranegger
- * Date: 27.03.2026
- * Time: 11:12
+ * REST controller that exposes appointment management endpoints.
+ * <p>
+ * Base path: {@code /api/appointments}. All requests require a valid JWT unless
+ * the endpoint is explicitly marked as public in {@code SecurityConfig}.
+ * </p>
+ *
+ * @author Dominik Ranegger
  */
-
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
@@ -29,52 +28,27 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     /**
-     * Retrieves all appointments paginated, optionally filtered by status.
+     * Returns a paginated list of all appointments, optionally filtered by their status.
+     * <p>
+     * {@code GET /api/appointments?status=NEU&page=0&size=10}
+     * </p>
      *
-     * @param status Filter status of the appointments (optional)
-     * @param page   Page number (default: 1)
-     * @param size   Number of appointments per page (default: 10)
+     * @param status optional {@link AppointmentStatus} filter; when omitted all appointments are returned
+     * @param page   zero-based page index (default: {@code 1})
+     * @param size   number of items per page (default: {@code 10})
+     * @return {@code 200 OK} with a {@link Page} of {@link AppointmentDTO} objects
      */
-
-    // GET /api/appointments?status=NEU&page=0&size=5
     @GetMapping
     public ResponseEntity<Page<AppointmentDTO>> getAppointments(
             @RequestParam(required = false) AppointmentStatus status,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size) {
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by("preferredDate").ascending());
+        Pageable pageable = PageRequest.of(page, size);
 
         if (status != null) {
             return ResponseEntity.ok(appointmentService.getByStatus(status, pageable));
         }
         return ResponseEntity.ok(appointmentService.getAllAppointments(pageable));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<AppointmentDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(appointmentService.getById(id));
-    }
-
-    @PostMapping
-    public ResponseEntity<AppointmentDTO> create(@RequestBody AppointmentDTO dto) {
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(appointmentService.create(dto));
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<AppointmentDTO> updateStatus(
-            @PathVariable Long id,
-            @RequestBody StatusUpdateRequest request) {
-        return ResponseEntity.ok(
-                appointmentService.updateStatus(id, request.getStatus()));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        appointmentService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }
