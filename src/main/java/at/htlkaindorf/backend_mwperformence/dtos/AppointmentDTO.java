@@ -21,9 +21,19 @@ import java.time.LocalDateTime;
 @Builder
 public class AppointmentDTO {
     private Long id;
+    private Long customerId;
     private String customerName;
     private String serviceType;
-    private String vehicle;
-    private LocalDateTime preferredDate;
+    private String date;          // "YYYY-MM-DD"
+    private String time;          // "HH:mm"
+    private String brand;
+    private String model;
+    private Integer year;
+    private String licensePlate;
     private AppointmentStatus status;
+    private Double price;
+    private String note;
+    private String createdAt;     // ISO-8601 String
+    private Long vehicleId;
+    private Long serviceId;
 }
