@@ -6,12 +6,15 @@ import lombok.*;
 import java.util.List;
 
 /**
- * Project: backend_MWPerformence
- * Created by: Dominik Ranegger
- * Date: 25.03.2026
- * Time: 12:36
+ * JPA entity representing a service offered by the workshop (e.g. "Oil Change", "Tire Fitting").
+ * <p>
+ * Services are displayed on the frontend with an icon, title and subtitle. The {@code sort}
+ * field controls the display order. A service can be linked to many {@link Appointment}s and
+ * can appear in multiple {@link Offer}s through a many-to-many relationship.
+ * </p>
+ *
+ * @author Dominik Ranegger
  */
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,7 +37,7 @@ public class Service {
     private String subtitle;
 
     @Column(nullable = false)
-    private Double price;
+    private Integer sort;
 
     @OneToMany(mappedBy = "service", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
     @ToString.Exclude

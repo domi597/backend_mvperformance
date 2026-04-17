@@ -3,43 +3,51 @@ package at.htlkaindorf.backend_mwperformence.mapper;
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Project: backend_MWPerformence
- * Created by: Dominik Ranegger
- * Date: 07.04.2026
- * Time: 10:21
+ * MapStruct mapper for converting between {@link Appointment} entities and
+ * {@link AppointmentDTO} objects.
+ * <p>
+ * Spring manages the implementing class as a bean ({@code componentModel = "spring"}),
+ * so it can be injected directly into services and controllers.
+ * </p>
+ *
+ * @author Dominik Ranegger
  */
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
 
-    @Mapping(target = "customerId", source = "user.id")
-    @Mapping(target = "brand", source = "vehicleEntity.brand")
-    @Mapping(target = "model", source = "vehicleEntity.model")
-    @Mapping(target = "year", source = "vehicleEntity.buildYear")
-    @Mapping(target = "licensePlate", source = "vehicleEntity.licensePlate")
-    @Mapping(target = "price", source = "price")
-    @Mapping(target = "date", expression = "java(appointment.getPreferredDate().toLocalDate().toString())")
-    @Mapping(target = "time", expression = "java(appointment.getPreferredDate().toLocalTime().toString().substring(0,5))")
-    @Mapping(target = "createdAt", expression = "java(appointment.getCreatedAt() != null ? appointment.getCreatedAt().toString() : null)")
+    /**
+     * Converts a single {@link Appointment} entity to an {@link AppointmentDTO}.
+     *
+     * @param appointment the entity to convert
+     * @return the corresponding DTO
+     */
     AppointmentDTO toDto(Appointment appointment);
 
-    @Mapping(target = "user.id", source = "customerId")
-    @Mapping(target = "preferredDate", expression = "java(mapDateTime(dto.getDate(), dto.getTime()))")
-    Appointment toEntity(AppointmentDTO dto);
-
+    /**
+     * Converts a list of {@link Appointment} entities to a list of {@link AppointmentDTO}s.
+     *
+     * @param appointments the list of entities to convert
+     * @return a list of corresponding DTOs
+     */
     List<AppointmentDTO> toDto(List<Appointment> appointments);
 
-    default LocalDateTime mapDateTime(String date, String time) {
-        if (date == null || time == null) return null;
-        try {
-            return LocalDateTime.parse(date + "T" + (time.length() == 5 ? time : "0" + time));
-        } catch (Exception e) {
-            return null;
-        }
-    }
+    /**
+     * Converts an {@link AppointmentDTO} back to an {@link Appointment} entity.
+     *
+     * @param appointmentDTO the DTO to convert
+     * @return the corresponding entity
+     */
+    Appointment toEntity(AppointmentDTO appointmentDTO);
+
+    /**
+     * Converts a list of {@link AppointmentDTO}s to a list of {@link Appointment} entities.
+     *
+     * @param appointmentDTOs the list of DTOs to convert
+     * @return a list of corresponding entities
+     */
+    List<Appointment> toEntity(List<AppointmentDTO> appointmentDTOs);
 }
