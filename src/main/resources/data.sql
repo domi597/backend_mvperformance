@@ -69,41 +69,14 @@ INSERT INTO offer_services (offer_id, service_id) VALUES (1, 3);
 INSERT INTO offer_services (offer_id, service_id) VALUES (2, 5);
 
 -- 6. APPOINTMENTS
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (1, 2, 1, 1, 'Thomas Kauer', 'Ölwechsel', 'VW Golf 2019', '2026-03-19 10:00:00', 'NEU', 149.99, CURRENT_TIMESTAMP);
+INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status)
+VALUES (1, 2, 1, 1, 'Thomas Kauer',  'Ölwechsel',     'VW Golf 2019',  '2026-03-19 10:00:00', 'NEU');
 
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (2, 3, 2, 2, 'Maria Schreiner', 'Reifenwechsel', 'BMW X3 2021', '2026-03-20 09:00:00', 'BESTÄTIGT', 79.99, CURRENT_TIMESTAMP);
+INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status)
+VALUES (2, 3, 2, 2, 'Maria Schreiner', 'Reifenwechsel', 'BMW X3 2021',   '2026-03-20 09:00:00', 'BESTÄTIGT');
 
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (3, 4, 3, 3, 'Stefan Bauer', 'Bremsenservice', 'Audi A4 2017', '2026-03-21 14:00:00', 'ABGESCHLOSSEN', 199.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (4, 2, 1, 2, 'Thomas Kauer', 'Reifenwechsel', 'VW Golf 2019', '2026-04-02 08:30:00', 'NEU', 79.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (5, 3, 2, 3, 'Maria Schreiner', 'Bremsenservice', 'BMW X3 2021', '2026-04-03 11:00:00', 'BESTÄTIGT', 199.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (6, 4, 3, 1, 'Stefan Bauer', 'Ölwechsel', 'Audi A4 2017', '2026-04-04 13:15:00', 'NEU', 149.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (7, 2, 1, 5, 'Thomas Kauer', 'Klimaservice', 'VW Golf 2019', '2026-04-05 09:45:00', 'ABGESCHLOSSEN', 69.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (8, 3, 2, 4, 'Maria Schreiner', 'HU / §57a', 'BMW X3 2021', '2026-04-06 10:30:00', 'NEU', 120.00, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (9, 4, 3, 2, 'Stefan Bauer', 'Reifenwechsel', 'Audi A4 2017', '2026-04-07 15:00:00', 'BESTÄTIGT', 79.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (10, 2, 1, 3, 'Thomas Kauer', 'Bremsenservice', 'VW Golf 2019', '2026-04-08 08:00:00', 'NEU', 199.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (11, 3, 2, 1, 'Maria Schreiner', 'Ölwechsel', 'BMW X3 2021', '2026-04-09 09:00:00', 'NEU', 149.99, CURRENT_TIMESTAMP);
-
-INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status, price, created_at)
-VALUES (12, 4, 3, 5, 'Stefan Bauer', 'Klimaservice', 'Audi A4 2017', '2026-04-10 14:30:00', 'BESTÄTIGT', 69.99, CURRENT_TIMESTAMP);
+INSERT INTO appointments (id, user_id, vehicle_id, service_id, customer_name, service_type, vehicle, preferred_date, status)
+VALUES (3, 4, 3, 3, 'Stefan Bauer',  'Bremsenservice','Audi A4 2017',  '2026-03-21 14:00:00', 'ABGESCHLOSSEN');
 
 -- 7. REVIEWS
 INSERT INTO reviews (id, user_id, name, stars, text, created_at)
