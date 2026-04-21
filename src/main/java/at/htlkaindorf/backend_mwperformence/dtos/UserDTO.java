@@ -26,6 +26,7 @@ public class UserDTO {
     private String email;
     private String phone;
     private String street;
+    private String zip;
     private String city;
     private Role role;
     private LocalDateTime createdAt;

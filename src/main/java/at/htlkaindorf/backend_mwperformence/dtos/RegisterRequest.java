@@ -39,6 +39,8 @@ public class RegisterRequest {
     private String phone;
     /** Optional street address of the user. */
     private String street;
+    /** Optional zip code of the user. */
+    private String zip;
     /** Optional city of the user. */
     private String city;
 

@@ -37,11 +37,14 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(length = 20)
+    @Column(length = 50)
     private String phone;
 
     @Column(length = 150)
     private String street;
+
+    @Column(length = 10)
+    private String zip;
 
     @Column(length = 100)
     private String city;
