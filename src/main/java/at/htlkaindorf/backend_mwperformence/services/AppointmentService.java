@@ -3,6 +3,7 @@ package at.htlkaindorf.backend_mwperformence.services;
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
+import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.mapper.AppointmentMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.ServiceRepository;
@@ -58,13 +59,25 @@ public class AppointmentService {
             appointment.setUser(userRepository.findById(dto.getCustomerId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden")));
 
-        if (dto.getVehicleId() != null)
-            appointment.setVehicleEntity(vehicleRepository.findById(dto.getVehicleId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fahrzeug nicht gefunden")));
+        if (dto.getLicensePlate() != null) {
+            var v = vehicleRepository.findByLicensePlate(dto.getLicensePlate())
+                    .orElseGet(() -> vehicleRepository.save(Vehicle.builder()
+                            .brand(dto.getBrand())
+                            .model(dto.getModel())
+                            .buildYear(dto.getYear())
+                            .licensePlate(dto.getLicensePlate())
+                            .user(appointment.getUser())
+                            .build()));
+            appointment.setVehicleEntity(v);
+            appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
+        }
 
-        if (dto.getServiceId() != null)
-            appointment.setService(serviceRepository.findById(dto.getServiceId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden")));
+        if (dto.getServiceId() != null) {
+            var s = serviceRepository.findById(dto.getServiceId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden"));
+            appointment.setService(s);
+            appointment.setServiceType(s.getTitle());
+        }
 
         appointment.setStatus(AppointmentStatus.NEU);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
@@ -75,7 +88,6 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
-
         appointment.setStatus(status);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
     }
