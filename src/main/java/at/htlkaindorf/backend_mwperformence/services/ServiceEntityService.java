@@ -1,17 +1,21 @@
 package at.htlkaindorf.backend_mwperformence.services;
 
 import at.htlkaindorf.backend_mwperformence.dtos.ServiceEntityDTO;
+import at.htlkaindorf.backend_mwperformence.entites.Offer;
 import at.htlkaindorf.backend_mwperformence.entites.ServiceEntity;
 import at.htlkaindorf.backend_mwperformence.mapper.ServiceMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.ServiceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ServiceService {
+public class ServiceEntityService {
 
     private final ServiceRepository serviceRepository;
     private final ServiceMapper serviceMapper;
@@ -39,7 +43,16 @@ public class ServiceService {
         return serviceMapper.toDto(serviceRepository.save(entity));
     }
 
+    @Transactional
     public void deleteService(Long id) {
-        serviceRepository.deleteById(id);
+        ServiceEntity service = serviceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden"));
+
+        for (Offer offer : service.getOffers()) {
+            offer.getServiceEntities().remove(service);
+        }
+        service.getOffers().clear();
+
+        serviceRepository.delete(service);
     }
 }
