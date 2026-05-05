@@ -13,18 +13,19 @@ TRUNCATE TABLE
     users
     RESTART IDENTITY CASCADE;
 
+
 -- 1. USERS
-INSERT INTO users (first_name, last_name, email, password_hash, phone, street, city, role, created_at)
-VALUES ('Max', 'Mustermann', 'admin@mwperformance.at', '$2y$10$..iVgU.UYVDvYuW8NLokEONtpdp/Rtck/qAnzFGq.bksPgOId9zwq', '+43 664 1234567', 'Werkstattstraße 1', 'Graz', 'ADMIN', CURRENT_TIMESTAMP);
+INSERT INTO users (first_name, last_name, email, password_hash, phone, street, zip, city, role, created_at)
+VALUES ('Max', 'Mustermann', 'admin@mwperformance.at', '$2y$10$..iVgU.UYVDvYuW8NLokEONtpdp/Rtck/qAnzFGq.bksPgOId9zwq', '+43 664 1234567', 'Werkstattstraße 1', '8010', 'Graz', 'ADMIN', CURRENT_TIMESTAMP);
 
-INSERT INTO users (first_name, last_name, email, password_hash, phone, street, city, role, created_at)
-VALUES ('Thomas', 'Kauer', 'thomas.kauer@gmail.com', '$2y$10$Vp.8qEcQlOBNYBHXAZi0xeS6V5Fr9giPo249L51nDVN8wqG8nERQG', '+43 699 1111111', 'Hauptstraße 5', 'Graz', 'CUSTOMER', CURRENT_TIMESTAMP);
+INSERT INTO users (first_name, last_name, email, password_hash, phone, street, zip, city, role, created_at)
+VALUES ('Thomas', 'Kauer', 'thomas.kauer@gmail.com', '$2y$10$Vp.8qEcQlOBNYBHXAZi0xeS6V5Fr9giPo249L51nDVN8wqG8nERQG', '+43 699 1111111', 'Hauptstraße 5', '8010', 'Graz', 'CUSTOMER', CURRENT_TIMESTAMP);
 
-INSERT INTO users (first_name, last_name, email, password_hash, phone, street, city, role, created_at)
-VALUES ('Maria', 'Schreiner', 'maria.schreiner@gmail.com', '$2y$10$1X8sYSsI1tEB6tidBUqsfeSqlVdvABnBMjIfPRB7pTzUz154.O.EG', '+43 699 2222222', 'Schillerstraße 12', 'Graz', 'CUSTOMER', CURRENT_TIMESTAMP);
+INSERT INTO users (first_name, last_name, email, password_hash, phone, street, zip, city, role, created_at)
+VALUES ('Maria', 'Schreiner', 'maria.schreiner@gmail.com', '$2y$10$1X8sYSsI1tEB6tidBUqsfeSqlVdvABnBMjIfPRB7pTzUz154.O.EG', '+43 699 2222222', 'Schillerstraße 12', '8010', 'Graz', 'CUSTOMER', CURRENT_TIMESTAMP);
 
-INSERT INTO users (first_name, last_name, email, password_hash, phone, street, city, role, created_at)
-VALUES ('Stefan', 'Bauer', 'stefan.bauer@gmail.com', '$2y$10$G7dfXYviNn6Ll/NvLX1XZeTH1TbS9waUZEgijrNERwHzmEDFUGAMy', '+43 699 3333333', 'Mozartgasse 3', 'Leibnitz', 'CUSTOMER', CURRENT_TIMESTAMP);
+INSERT INTO users (first_name, last_name, email, password_hash, phone, street, zip, city, role, created_at)
+VALUES ('Stefan', 'Bauer', 'stefan.bauer@gmail.com', '$2y$10$G7dfXYviNn6Ll/NvLX1XZeTH1TbS9waUZEgijrNERwHzmEDFUGAMy', '+43 699 3333333', 'Mozartgasse 3', '8430', 'Leibnitz', 'CUSTOMER', CURRENT_TIMESTAMP);
 
 -- 2. VEHICLES  (user_id: Thomas=2, Maria=3, Stefan=4)
 INSERT INTO vehicles (user_id, brand, model, build_year, license_plate)
