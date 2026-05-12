@@ -45,7 +45,7 @@ public class AppointmentController {
         if (status != null) {
             return ResponseEntity.ok(appointmentService.getByStatus(status, pageable));
         }
-        return ResponseEntity.ok(appointmentService.getAllAppointments(pageable));
+        return ResponseEntity.ok(appointmentService.getActiveAppointments(pageable));
     }
 
     /**
