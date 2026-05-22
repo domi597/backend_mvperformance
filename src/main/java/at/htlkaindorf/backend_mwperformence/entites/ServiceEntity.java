@@ -34,7 +34,6 @@ public class ServiceEntity {
     @Column(length = 100)
     private String subtitle;
 
-
     @OneToMany(mappedBy = "serviceEntity", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
