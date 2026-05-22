@@ -6,22 +6,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalTime;
-import java.util.List;
 
 /**
  * Project: backend_MWPerformence
  * Created by: Dominik Ranegger
- * Date: 27.03.2026
- * Time: 10:21
+ * Date: 22.05.2026
+ * Time: 11:01
  */
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ServiceEntityDTO {
+public class TimeslotDTO {
     private Long id;
-    private String icon;
-    private String title;
-    private String subtitle;
+    private LocalTime time;
 }

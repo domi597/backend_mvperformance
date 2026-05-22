@@ -9,6 +9,7 @@ TRUNCATE TABLE
     offer_services,
     offers,
     services,
+    timeslots,
     vehicles,
     users
     RESTART IDENTITY CASCADE;
@@ -191,3 +192,21 @@ VALUES ('Samstag', '09:00', '13:00', false);
 
 INSERT INTO opening_hours (day_label, open_time, close_time, closed)
 VALUES ('Sonntag', NULL, NULL, true);
+
+-- 10. TIMESLOTS
+INSERT INTO timeslots (time) VALUES ('08:00:00');
+INSERT INTO timeslots (time) VALUES ('08:30:00');
+INSERT INTO timeslots (time) VALUES ('09:00:00');
+INSERT INTO timeslots (time) VALUES ('09:30:00');
+INSERT INTO timeslots (time) VALUES ('10:00:00');
+INSERT INTO timeslots (time) VALUES ('10:30:00');
+INSERT INTO timeslots (time) VALUES ('11:00:00');
+INSERT INTO timeslots (time) VALUES ('11:30:00');
+INSERT INTO timeslots (time) VALUES ('13:00:00');
+INSERT INTO timeslots (time) VALUES ('13:30:00');
+INSERT INTO timeslots (time) VALUES ('14:00:00');
+INSERT INTO timeslots (time) VALUES ('14:30:00');
+INSERT INTO timeslots (time) VALUES ('15:00:00');
+INSERT INTO timeslots (time) VALUES ('15:30:00');
+INSERT INTO timeslots (time) VALUES ('16:00:00');
+INSERT INTO timeslots (time) VALUES ('16:30:00');

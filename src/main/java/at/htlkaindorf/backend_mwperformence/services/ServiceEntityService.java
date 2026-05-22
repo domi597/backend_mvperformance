@@ -11,8 +11,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+
+/**
+ * Project: backend_MWPerformence
+ * Created by: Dominik Ranegger
+ * Date: 21.04.2026
+ * Time: 11:08
+ */
 
 @Service
 @RequiredArgsConstructor
