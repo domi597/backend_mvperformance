@@ -3,6 +3,8 @@ package at.htlkaindorf.backend_mwperformence.repositories;
 import at.htlkaindorf.backend_mwperformence.entites.ServiceEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 /**
  * Project: backend_MWPerformence
  * Created by: Dominik Ranegger
@@ -10,5 +12,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Time: 12:36
  */
 public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
-}
 
+    Optional<ServiceEntity> findByTitleIgnoreCase(String title);
+}
