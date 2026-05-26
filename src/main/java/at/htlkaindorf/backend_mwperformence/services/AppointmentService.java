@@ -3,6 +3,7 @@ package at.htlkaindorf.backend_mwperformence.services;
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
+import at.htlkaindorf.backend_mwperformence.entites.ServiceEntity;
 import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.mapper.AppointmentMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
@@ -19,13 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
-
-/**
- * Project: backend_MWPerformence
- * Created by: Dominik Ranegger
- * Date: 07.04.2026
- * Time: 10:14
- */
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,30 +32,16 @@ public class AppointmentService {
     private final VehicleRepository vehicleRepository;
     private final ServiceRepository serviceRepository;
 
-    /**
-     * Returns all appointments that are not yet completed or rejected
-     *
-     * @param pageable pagination and sorting information
-     * @return page of active appointments
-     */
     public Page<AppointmentDTO> getActiveAppointments(Pageable pageable) {
         return appointmentRepository.findByStatusNotIn(
                         List.of(AppointmentStatus.ABGESCHLOSSEN, AppointmentStatus.ABGELEHNT), pageable)
                 .map(appointmentMapper::toDto);
     }
 
-    /**
-     * Returns all appointments scheduled for today.
-     *
-     * @param pageable pagination and sorting information
-     * @return page of today's appointments
-     */
     public Page<AppointmentDTO> getTodayAppointments(Pageable pageable) {
         LocalDate today = LocalDate.now();
         return appointmentRepository.findByPreferredDateBetween(
-                        today.atStartOfDay(),
-                        today.atTime(23, 59, 59),
-                        pageable)
+                        today.atStartOfDay(), today.atTime(23, 59, 59), pageable)
                 .map(appointmentMapper::toDto);
     }
 
@@ -70,20 +51,30 @@ public class AppointmentService {
     }
 
     public AppointmentDTO getById(Long id) {
-        Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Termin mit ID " + id + " wurde nicht gefunden."));
-        return appointmentMapper.toDto(appointment);
+        return appointmentMapper.toDto(
+                appointmentRepository.findById(id)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "Termin mit ID " + id + " nicht gefunden.")));
     }
 
     @Transactional
     public AppointmentDTO create(AppointmentDTO dto) {
+        // Mapper übernimmt jetzt: serviceType, price direkt aus DTO
         Appointment appointment = appointmentMapper.toEntity(dto);
 
-        if (dto.getCustomerId() != null)
-            appointment.setUser(userRepository.findById(dto.getCustomerId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden")));
+        // ── price: Fallback auf 0.0 damit nullable=false nicht crasht ─────────
+        if (appointment.getPrice() == null) {
+            appointment.setPrice(0.0);
+        }
 
+        // ── User ──────────────────────────────────────────────────────────────
+        if (dto.getCustomerId() != null) {
+            appointment.setUser(
+                    userRepository.findById(dto.getCustomerId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden")));
+        }
+
+        // ── Fahrzeug anlegen oder wiederverwenden ─────────────────────────────
         if (dto.getLicensePlate() != null) {
             var v = vehicleRepository.findByLicensePlate(dto.getLicensePlate())
                     .orElseGet(() -> vehicleRepository.save(Vehicle.builder()
@@ -97,12 +88,24 @@ public class AppointmentService {
             appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
         }
 
+        // ── ServiceEntity zuweisen ────────────────────────────────────────────
+        // Priorität 1: serviceId (kommt z.B. vom Admin-Frontend)
+        // Priorität 2: serviceType-String (kommt vom Kunden-Buchungsformular)
+        Optional<ServiceEntity> serviceOpt = Optional.empty();
+
         if (dto.getServiceId() != null) {
-            var s = serviceRepository.findById(dto.getServiceId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden"));
-            appointment.setServiceEntity(s);
-            appointment.setServiceType(s.getTitle());
+            serviceOpt = serviceRepository.findById(dto.getServiceId());
         }
+        if (serviceOpt.isEmpty() && dto.getServiceType() != null && !dto.getServiceType().isBlank()) {
+            serviceOpt = serviceRepository.findByTitleIgnoreCase(dto.getServiceType());
+        }
+
+        if (serviceOpt.isPresent()) {
+            ServiceEntity s = serviceOpt.get();
+            appointment.setServiceEntity(s);
+            appointment.setServiceType(s.getTitle()); // immer den DB-Titel verwenden
+        }
+        // Wenn kein Match → serviceType bleibt so wie der Mapper ihn gesetzt hat (aus dto.getServiceType())
 
         appointment.setStatus(AppointmentStatus.NEU);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
@@ -111,18 +114,15 @@ public class AppointmentService {
     @Transactional
     public AppointmentDTO updateStatus(Long id, AppointmentStatus status) {
         Appointment appointment = appointmentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
         appointment.setStatus(status);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!appointmentRepository.existsById(id)) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Termin existiert nicht.");
-        }
+        if (!appointmentRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Termin existiert nicht.");
         appointmentRepository.deleteById(id);
     }
 }
