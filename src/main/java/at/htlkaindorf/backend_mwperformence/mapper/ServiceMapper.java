@@ -25,5 +25,6 @@ public interface ServiceMapper {
     ServiceEntityDTO toDto(ServiceEntity service);
 
     List<ServiceEntityDTO> toDto(List<ServiceEntity> service);
+
     List<ServiceEntity> toEntity(List<ServiceEntityDTO> serviceDTO);
 }

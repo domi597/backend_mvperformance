@@ -51,4 +51,27 @@ public class ServiceEntityController {
         serviceEntityService.deleteService(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Converts a {@link org.springframework.web.multipart.MultipartFile} to a
+     * Base64 string and assembles a {@link ServiceEntityDTO}.
+     */
+    private ServiceEntityDTO buildDto(Long id,
+                                      org.springframework.web.multipart.MultipartFile icon,
+                                      String title,
+                                      String subtitle) throws java.io.IOException {
+
+        String iconBase64 = null;
+        if (icon != null && !icon.isEmpty()) {
+            iconBase64 = java.util.Base64.getEncoder().encodeToString(icon.getBytes());
+        }
+
+        return ServiceEntityDTO.builder()
+                .id(id)
+                .icon(iconBase64)
+                .title(title)
+                .subtitle(subtitle)
+                .build();
+    }
 }
+
