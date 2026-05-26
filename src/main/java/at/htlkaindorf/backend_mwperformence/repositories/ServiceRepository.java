@@ -13,6 +13,5 @@ import java.util.Optional;
  */
 public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
 
-    // Suche per Titel (case-insensitive) für Fallback wenn nur serviceType-String kommt
     Optional<ServiceEntity> findByTitleIgnoreCase(String title);
 }
