@@ -3,10 +3,18 @@ package at.htlkaindorf.backend_mwperformence.controller;
 import at.htlkaindorf.backend_mwperformence.dtos.OfferDTO;
 import at.htlkaindorf.backend_mwperformence.services.OfferService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+/**
+ * Project: backend_MWPerformence
+ * Created by: Dominik Ranegger
+ * Date: 22.05.2026
+ * Time: 11:10
+ */
 
 
 @RestController
@@ -32,7 +40,7 @@ public class OfferController {
 
     @PostMapping
     public ResponseEntity<OfferDTO> create(@RequestBody OfferDTO dto) {
-        return ResponseEntity.ok(offerService.create(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(offerService.create(dto));
     }
 
     @PutMapping("/{id}")
@@ -46,3 +54,4 @@ public class OfferController {
         return ResponseEntity.noContent().build();
     }
 }
+
