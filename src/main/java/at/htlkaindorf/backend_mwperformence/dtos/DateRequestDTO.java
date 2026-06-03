@@ -7,22 +7,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * Project: backend_MWPerformence
  * Created by: Dominik Ranegger
- * Date: 22.05.2026
- * Time: 11:01
+ * Date: 03.06.2026
+ * Time: 17:19
  */
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TimeslotDTO {
-    private Long id;
-
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime time;
+public class DateRequestDTO {
+    @JsonFormat(pattern = "dd.MM.yyyy")
+    private LocalDate date;
 }

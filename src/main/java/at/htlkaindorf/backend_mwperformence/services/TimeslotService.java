@@ -1,14 +1,19 @@
 package at.htlkaindorf.backend_mwperformence.services;
 
+import at.htlkaindorf.backend_mwperformence.dtos.DateRequestDTO;
 import at.htlkaindorf.backend_mwperformence.dtos.TimeslotDTO;
+import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.Timeslot;
 import at.htlkaindorf.backend_mwperformence.mapper.TimeslotMapper;
+import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.TimeslotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -26,6 +31,7 @@ public class TimeslotService {
 
     private final TimeslotRepository timeslotRepository;
     private final TimeslotMapper timeslotMapper;
+    private final AppointmentRepository appointmentRepository;
 
     public List<TimeslotDTO> getAll() {
         return timeslotMapper.toDto(
@@ -36,11 +42,17 @@ public class TimeslotService {
         );
     }
 
-    public TimeslotDTO create(LocalTime time) {
-        if (timeslotRepository.existsByTime(time))
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Timeslot bereits vorhanden: " + time);
-        Timeslot saved = timeslotRepository.save(Timeslot.builder().time(time).build());
-        return timeslotMapper.toDto(saved);
+    public List<TimeslotDTO> getAvailable(DateRequestDTO request) {
+        List<LocalTime> bookedTimes = appointmentRepository.getAllAppointments(request.getDate())
+                .stream()
+                .map(a -> a.getPreferredDate().toLocalTime())
+                .toList();
+
+        return timeslotMapper.toDto(
+                timeslotRepository.findAll().stream()
+                        .filter(t -> !bookedTimes.contains(t.getTime()))
+                        .toList()
+        );
     }
 
     public void delete(Long id) {

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Project: backend_MWPerformence
@@ -30,7 +31,7 @@ public class Appointment {
     @Column(name = "service_type")
     private String serviceType;
 
-    private String vehicle; // Anzeige-String (z.B. "VW Golf")
+    private String vehicle;
 
     @Column(name = "preferred_date", nullable = false)
     private LocalDateTime preferredDate;
@@ -45,7 +46,7 @@ public class Appointment {
     @Column(nullable = false)
     private Double price;
 
-    @Column(columnDefinition = "TEXT") // Für längere Anmerkungen
+    @Column(columnDefinition = "TEXT")
     private String note;
 
     @ManyToOne(fetch = FetchType.LAZY)
