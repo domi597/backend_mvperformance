@@ -36,7 +36,6 @@ public interface AppointmentMapper {
     @Mapping(target = "status",        ignore = true)
     @Mapping(target = "createdAt",     ignore = true)
     @Mapping(target = "vehicle",       ignore = true)
-    // serviceType und price werden NICHT ignoriert → kommen direkt aus dem DTO
     @Mapping(target = "preferredDate", expression = "java(mapDateTime(dto.getDate(), dto.getTime()))")
     Appointment toEntity(AppointmentDTO dto);
 

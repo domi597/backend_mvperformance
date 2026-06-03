@@ -1,11 +1,13 @@
 package at.htlkaindorf.backend_mwperformence.controller;
 
+import at.htlkaindorf.backend_mwperformence.dtos.DateRequestDTO;
 import at.htlkaindorf.backend_mwperformence.dtos.TimeslotDTO;
 import at.htlkaindorf.backend_mwperformence.services.TimeslotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -29,10 +31,9 @@ public class TimeslotController {
     }
 
     @PostMapping
-    public ResponseEntity<TimeslotDTO> create(@RequestParam LocalTime time) {
-        return ResponseEntity.ok(timeslotService.create(time));
+    public ResponseEntity<List<TimeslotDTO>> getAvailable(@RequestBody DateRequestDTO date) {
+        return ResponseEntity.ok(timeslotService.getAvailable(date));
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         timeslotService.delete(id);

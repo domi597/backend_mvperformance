@@ -1,12 +1,10 @@
 package at.htlkaindorf.backend_mwperformence.entites;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Project: backend_MWPerformence
@@ -27,6 +25,7 @@ public class Timeslot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private LocalTime time;
+
 }

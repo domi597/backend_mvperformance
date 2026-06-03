@@ -1,7 +1,9 @@
 package at.htlkaindorf.backend_mwperformence.repositories;
 
+import at.htlkaindorf.backend_mwperformence.dtos.TimeslotDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Timeslot;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 /**
  * Project: backend_MWPerformence
@@ -11,5 +13,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 
 public interface TimeslotRepository extends JpaRepository<Timeslot, Long> {
-    boolean existsByTime(java.time.LocalTime time);
+
 }
