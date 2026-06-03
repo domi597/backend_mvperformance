@@ -158,17 +158,8 @@ VALUES (3, 'Maria Schreiner', 4, 'Schneller Reifenwechsel, sehr freundlich.',   
 INSERT INTO reviews (user_id, name, stars, text, created_at)
 VALUES (4, 'Stefan Bauer',    5, 'Transparent, pünktlich, top Preisleistung.',         CURRENT_TIMESTAMP);
 
--- 8. CONTACT INFO
-INSERT INTO contact_info (icon, value)
-VALUES ('phone',    '+43 664 1234567');
 
-INSERT INTO contact_info (icon, value)
-VALUES ('envelope', 'office@mwperformance.at');
-
-INSERT INTO contact_info (icon, value)
-VALUES ('map-pin',  'Werkstattstraße 1, 8010 Graz');
-
--- 9. OPENING HOURS
+-- 8. OPENING HOURS
 INSERT INTO opening_hours (day_label, open_time, close_time, closed)
 VALUES ('Mo – Fr', '08:00', '17:00', false);
 
@@ -178,7 +169,7 @@ VALUES ('Samstag', '09:00', '13:00', false);
 INSERT INTO opening_hours (day_label, open_time, close_time, closed)
 VALUES ('Sonntag', NULL, NULL, true);
 
--- 10. TIMESLOTS
+-- 9. TIMESLOTS
 INSERT INTO timeslots (time) VALUES ('08:00:00');
 INSERT INTO timeslots (time) VALUES ('08:30:00');
 INSERT INTO timeslots (time) VALUES ('09:00:00');

@@ -59,22 +59,19 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentDTO create(AppointmentDTO dto) {
-        // Mapper übernimmt jetzt: serviceType, price direkt aus DTO
+
         Appointment appointment = appointmentMapper.toEntity(dto);
 
-        // ── price: Fallback auf 0.0 damit nullable=false nicht crasht ─────────
         if (appointment.getPrice() == null) {
             appointment.setPrice(0.0);
         }
 
-        // ── User ──────────────────────────────────────────────────────────────
         if (dto.getCustomerId() != null) {
             appointment.setUser(
                     userRepository.findById(dto.getCustomerId())
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden")));
         }
 
-        // ── Fahrzeug anlegen oder wiederverwenden ─────────────────────────────
         if (dto.getLicensePlate() != null) {
             var v = vehicleRepository.findByLicensePlate(dto.getLicensePlate())
                     .orElseGet(() -> vehicleRepository.save(Vehicle.builder()
@@ -88,9 +85,6 @@ public class AppointmentService {
             appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
         }
 
-        // ── ServiceEntity zuweisen ────────────────────────────────────────────
-        // Priorität 1: serviceId (kommt z.B. vom Admin-Frontend)
-        // Priorität 2: serviceType-String (kommt vom Kunden-Buchungsformular)
         Optional<ServiceEntity> serviceOpt = Optional.empty();
 
         if (dto.getServiceId() != null) {
@@ -103,9 +97,9 @@ public class AppointmentService {
         if (serviceOpt.isPresent()) {
             ServiceEntity s = serviceOpt.get();
             appointment.setServiceEntity(s);
-            appointment.setServiceType(s.getTitle()); // immer den DB-Titel verwenden
+            appointment.setServiceType(s.getTitle());
         }
-        // Wenn kein Match → serviceType bleibt so wie der Mapper ihn gesetzt hat (aus dto.getServiceType())
+
 
         appointment.setStatus(AppointmentStatus.NEU);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));
