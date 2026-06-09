@@ -42,8 +42,8 @@ public class TimeslotService {
         );
     }
 
-    public List<TimeslotDTO> getAvailable(DateRequestDTO request) {
-        List<LocalTime> bookedTimes = appointmentRepository.getAllAppointments(request.getDate())
+    public List<TimeslotDTO> getAvailable(LocalDate date) {
+        List<LocalTime> bookedTimes = appointmentRepository.getAllAppointments(date)
                 .stream()
                 .map(a -> a.getPreferredDate().toLocalTime())
                 .toList();

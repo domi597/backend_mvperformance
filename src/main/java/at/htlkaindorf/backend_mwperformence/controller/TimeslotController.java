@@ -31,7 +31,7 @@ public class TimeslotController {
     }
 
     @PostMapping
-    public ResponseEntity<List<TimeslotDTO>> getAvailable(@RequestBody DateRequestDTO date) {
+    public ResponseEntity<List<TimeslotDTO>> getAvailable(@RequestParam LocalDate date) {
         return ResponseEntity.ok(timeslotService.getAvailable(date));
     }
     @DeleteMapping("/{id}")
