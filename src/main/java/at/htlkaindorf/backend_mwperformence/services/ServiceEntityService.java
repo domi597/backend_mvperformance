@@ -51,12 +51,18 @@ public class ServiceEntityService {
     }
 
     public ServiceEntityDTO updateService(Long id, ServiceEntityDTO dto) {
-        serviceRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden: " + id));
-        ServiceEntity entity = serviceMapper.toEntity(dto);
-        entity.setId(id);
+        ServiceEntity entity = serviceRepository.findById(id)
+                                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service nicht gefunden: " + id));
+
         if (dto.getIcon() != null)
             entity.setIcon(Base64.getDecoder().decode(dto.getIcon()));
+
+        if (dto.getTitle() != null)
+            entity.setTitle(dto.getTitle());
+
+        if (dto.getSubtitle() != null)
+            entity.setSubtitle(dto.getSubtitle());
+
         return encodeIcon(serviceRepository.save(entity));
     }
 
