@@ -22,8 +22,6 @@ import java.util.List;
  * Time: 11:08
  */
 
-
-
 @Service
 @RequiredArgsConstructor
 public class OfferService {
@@ -55,14 +53,17 @@ public class OfferService {
     }
 
     public OfferDTO update(Long id, OfferDTO dto) {
-        offerRepository.findById(id)
+        Offer existing = offerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found: " + id));
-        Offer offer = offerMapper.toEntity(dto);
-        offer.setId(id);
-        offer.setCreatedAt(LocalDateTime.now());
-        if (offer.getActive() == null) offer.setActive(true);
-        offer.setServiceEntities(resolveServices(dto));
-        return offerMapper.toDto(offerRepository.save(offer));
+
+        existing.setTitle(dto.getTitle());
+        existing.setDescription(dto.getDescription());
+        existing.setPrice(dto.getPrice());
+        existing.setDuration(dto.getDuration());
+        existing.setActive(dto.getActive() != null ? dto.getActive() : true);
+        existing.setServiceEntities(resolveServices(dto));
+
+        return offerMapper.toDto(offerRepository.save(existing));
     }
 
     public void delete(Long id) {

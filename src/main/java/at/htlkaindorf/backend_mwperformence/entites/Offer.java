@@ -13,9 +13,10 @@ import java.util.List;
  * Time: 21:23
  */
 
-@Data
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Entity
 @Table(name = "offers")
@@ -38,12 +39,10 @@ public class Offer {
     private Integer duration;
 
     @Column(nullable = false)
-    @Builder.Default
-    private Boolean active = true;
+    private Boolean active;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinTable(name = "offer_services",
