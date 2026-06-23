@@ -3,9 +3,11 @@ package at.htlkaindorf.backend_mwperformence.controller;
 import at.htlkaindorf.backend_mwperformence.dtos.AuthResponse;
 import at.htlkaindorf.backend_mwperformence.dtos.LoginRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.RegisterRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
 import at.htlkaindorf.backend_mwperformence.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> me(Authentication authentication) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(authService.getCurrentUser(email));
+    }
 
     /**
      * Authenticates an existing user with their e-mail and password.

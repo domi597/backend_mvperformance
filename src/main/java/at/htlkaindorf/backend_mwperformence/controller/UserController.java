@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller for user profile management.
  * All routes require a valid JWT (enforced globally by Spring Security).
@@ -26,6 +28,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getById(id));
     }
 
+
+    /**
+     * GET /api/users — returns a list of all users.
+     */
+    @GetMapping
+    public ResponseEntity<List<UserDTO>> getAll() {
+        return ResponseEntity.ok(userService.getAll());
+    }
     /**
      *  PUT /api/users/{id} — updates mutable profile fields (partial update supported).
      */

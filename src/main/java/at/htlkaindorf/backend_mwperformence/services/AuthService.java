@@ -9,6 +9,7 @@ import at.htlkaindorf.backend_mwperformence.entites.Role;
 import at.htlkaindorf.backend_mwperformence.entites.User;
 import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.exception.ApiException;
+import at.htlkaindorf.backend_mwperformence.mapper.UserMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.VehicleRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
+    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -135,5 +137,11 @@ public class AuthService {
                 .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+
+    public UserDTO getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("Benutzer nicht gefunden.", HttpStatus.NOT_FOUND));
+        return userMapper.toDTO(user);
     }
 }
