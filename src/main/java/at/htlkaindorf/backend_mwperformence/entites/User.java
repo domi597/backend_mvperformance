@@ -61,7 +61,8 @@ public class User {
     @EqualsAndHashCode.Exclude
     private List<Vehicle> vehicles;
 
-    @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Appointment> appointments;

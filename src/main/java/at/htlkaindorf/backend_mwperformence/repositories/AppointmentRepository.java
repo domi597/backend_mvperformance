@@ -32,4 +32,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> getAllAppointments(LocalDate date);
 
     List<Appointment> findByStatusAndCreatedAtBefore(AppointmentStatus status, LocalDateTime date);
+
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.user.id = :userId AND a.status IN :statuses")
+    long countByUserIdAndStatusIn(Long userId, List<AppointmentStatus> statuses);
+
+    List<Appointment> findByUserId(Long userId);
 }

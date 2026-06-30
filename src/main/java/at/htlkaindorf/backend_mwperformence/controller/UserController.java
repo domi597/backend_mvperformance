@@ -1,7 +1,9 @@
 package at.htlkaindorf.backend_mwperformence.controller;
 
+import at.htlkaindorf.backend_mwperformence.dtos.ChangePasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
 import at.htlkaindorf.backend_mwperformence.services.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +13,6 @@ import java.util.List;
 /**
  * REST controller for user profile management.
  * All routes require a valid JWT (enforced globally by Spring Security).
- * @author N
  */
 @RestController
 @RequestMapping("/api/users")
@@ -42,6 +43,16 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> update(@PathVariable Long id, @RequestBody UserDTO dto) {
         return ResponseEntity.ok(userService.update(id, dto));
+    }
+
+    /**
+     *  PUT /api/users/{id}/password — admin sets a new password for the user.
+     *  The previous password is never read or returned.
+     */
+    @PutMapping("/{id}/password")
+    public ResponseEntity<Void> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(id, request.getPassword());
+        return ResponseEntity.noContent().build();
     }
 
     /**
