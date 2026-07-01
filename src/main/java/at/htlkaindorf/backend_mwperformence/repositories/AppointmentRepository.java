@@ -25,6 +25,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT a FROM Appointment a WHERE a.status NOT IN :statuses")
     Page<Appointment> findByStatusNotIn(List<AppointmentStatus> statuses, Pageable pageable);
 
+    @Query("SELECT a FROM Appointment a WHERE a.status NOT IN :statuses ORDER BY a.preferredDate ASC")
+    List<Appointment> findByStatusNotInOrderByPreferredDateAsc(List<AppointmentStatus> statuses);
+
     @Query("SELECT a FROM Appointment a WHERE a.preferredDate BETWEEN :start AND :end")
     Page<Appointment> findByPreferredDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 

@@ -21,6 +21,7 @@ import java.util.List;
 @Builder
 public class OfferDTO {
     private Long id;
+    private String icon;
     private String title;
     private String description;
     private Double price;

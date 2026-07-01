@@ -11,9 +11,11 @@ import java.util.List;
 public interface OfferMapper {
 
     @Mapping(source = "serviceEntities", target = "services")
+    @Mapping(target = "icon", ignore = true)
     OfferDTO toDto(Offer offer);
 
     @Mapping(source = "services", target = "serviceEntities")
+    @Mapping(target = "icon", ignore = true)
     Offer toEntity(OfferDTO offerDTO);
 
     List<OfferDTO> toDto(List<Offer> offers);

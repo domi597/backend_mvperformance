@@ -26,6 +26,10 @@ public class Offer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "icon")
+    @Basic(fetch = FetchType.EAGER)
+    private byte[] icon;
+
     @Column(nullable = false, length = 150)
     private String title;
 

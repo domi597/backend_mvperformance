@@ -31,17 +31,21 @@ public class OfferService {
     private final ServiceRepository serviceRepository;
 
     public List<OfferDTO> getAll() {
-        return offerMapper.toDto(offerRepository.findAll());
+        return offerRepository.findAll().stream()
+                .map(this::encodeIcon)
+                .toList();
     }
 
     public List<OfferDTO> getAllByActive(Boolean active) {
-        return offerMapper.toDto(offerRepository.findByActive(active));
+        return offerRepository.findByActive(active).stream()
+                .map(this::encodeIcon)
+                .toList();
     }
 
     public OfferDTO getById(Long id) {
         Offer offer = offerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found: " + id));
-        return offerMapper.toDto(offer);
+        return encodeIcon(offer);
     }
 
     public OfferDTO create(OfferDTO dto) {
@@ -49,21 +53,44 @@ public class OfferService {
         offer.setCreatedAt(LocalDateTime.now());
         if (offer.getActive() == null) offer.setActive(true);
         offer.setServiceEntities(resolveServices(dto));
-        return offerMapper.toDto(offerRepository.save(offer));
+        if (dto.getIcon() != null)
+            offer.setIcon(Base64.getDecoder().decode(dto.getIcon()));
+        return encodeIcon(offerRepository.save(offer));
     }
 
     public OfferDTO update(Long id, OfferDTO dto) {
         Offer existing = offerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Offer not found: " + id));
 
-        existing.setTitle(dto.getTitle());
-        existing.setDescription(dto.getDescription());
-        existing.setPrice(dto.getPrice());
-        existing.setDuration(dto.getDuration());
-        existing.setActive(dto.getActive() != null ? dto.getActive() : true);
-        existing.setServiceEntities(resolveServices(dto));
+        if (dto.getTitle() != null)
+            existing.setTitle(dto.getTitle());
 
-        return offerMapper.toDto(offerRepository.save(existing));
+        if (dto.getDescription() != null)
+            existing.setDescription(dto.getDescription());
+
+        if (dto.getPrice() != null)
+            existing.setPrice(dto.getPrice());
+
+        if (dto.getDuration() != null)
+            existing.setDuration(dto.getDuration());
+
+        if (dto.getActive() != null)
+            existing.setActive(dto.getActive());
+
+        if (dto.getServices() != null)
+            existing.setServiceEntities(resolveServices(dto));
+
+        if (dto.getIcon() != null)
+            existing.setIcon(Base64.getDecoder().decode(dto.getIcon()));
+
+        return encodeIcon(offerRepository.save(existing));
+    }
+
+    private OfferDTO encodeIcon(Offer offer) {
+        OfferDTO dto = offerMapper.toDto(offer);
+        if (offer.getIcon() != null)
+            dto.setIcon(Base64.getEncoder().encodeToString(offer.getIcon()));
+        return dto;
     }
 
     public void delete(Long id) {
@@ -73,10 +100,10 @@ public class OfferService {
     }
 
     private List<ServiceEntity> resolveServices(OfferDTO dto) {
-        if (dto.getServices() == null) return List.of();
+        if (dto.getServices() == null) return new java.util.ArrayList<>();
         return dto.getServices().stream()
                 .map(s -> serviceRepository.findById(s.getId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Service not found: " + s.getId())))
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
     }
 }

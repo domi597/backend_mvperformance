@@ -50,6 +50,18 @@ public class AppointmentService {
                 .map(appointmentMapper::toDto);
     }
 
+    /**
+     * Liefert alle Termine für die Kalenderansicht (Monat/Woche/Tag im Admin-Bereich).
+     * Zeigt bewusst auch abgeschlossene und vergangene Termine, nur abgelehnte
+     * Termine werden ausgeblendet. Unpaginiert, da der Kalender den kompletten
+     * Datensatz für die aktuelle Ansicht braucht.
+     */
+    public List<AppointmentDTO> getCalendarAppointments() {
+        return appointmentMapper.toDto(
+                appointmentRepository.findByStatusNotInOrderByPreferredDateAsc(
+                        List.of(AppointmentStatus.ABGELEHNT)));
+    }
+
     public AppointmentDTO getById(Long id) {
         return appointmentMapper.toDto(
                 appointmentRepository.findById(id)
@@ -99,7 +111,6 @@ public class AppointmentService {
             appointment.setServiceEntity(s);
             appointment.setServiceType(s.getTitle());
         }
-
 
         appointment.setStatus(AppointmentStatus.NEU);
         return appointmentMapper.toDto(appointmentRepository.save(appointment));

@@ -2,7 +2,6 @@ package at.htlkaindorf.backend_mwperformence.controller;
 
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
 import at.htlkaindorf.backend_mwperformence.dtos.StatusUpdateRequest;
-import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
 import at.htlkaindorf.backend_mwperformence.services.AppointmentService;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +13,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * Project: backend_MWPerformence
  * Created by: Dominik Ranegger
  * Date: 27.03.2026
  * Time: 11:12
  */
-
 @RestController
 @RequestMapping("/api/appointments")
 @RequiredArgsConstructor
@@ -51,6 +51,17 @@ public class AppointmentController {
         }
         return ResponseEntity.ok(appointmentService.getActiveAppointments(pageable));
     }
+
+    /**
+     * Liefert alle Termine für die Admin-Kalenderansicht (Monat/Woche/Tag).
+     * Enthält auch abgeschlossene und vergangene Termine, nur abgelehnte
+     * Termine werden ausgeblendet. Unpaginiert.
+     */
+    @GetMapping("/calendar")
+    public ResponseEntity<List<AppointmentDTO>> getCalendarAppointments() {
+        return ResponseEntity.ok(appointmentService.getCalendarAppointments());
+    }
+
     /**
      * @param id the ID of the appointment
      */
