@@ -9,8 +9,13 @@ import java.util.Optional;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
 
-    @Query("SELECT v FROM Vehicle v WHERE v.licensePlate = :licensePlate")
-    Optional<Vehicle> findByLicensePlate(String licensePlate);
+    @Query("SELECT v FROM Vehicle v WHERE v.licensePlate = :licensePlate ORDER BY v.id ASC")
+    List<Vehicle> findAllByLicensePlateOrderByIdAsc(String licensePlate);
+
+    default Optional<Vehicle> findByLicensePlate(String licensePlate) {
+        List<Vehicle> matches = findAllByLicensePlateOrderByIdAsc(licensePlate);
+        return matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
+    }
 
     List<Vehicle> findAllByUserId(Long userId);
 }

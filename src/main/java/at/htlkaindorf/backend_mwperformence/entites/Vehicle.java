@@ -50,5 +50,18 @@ public class Vehicle {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Appointment> appointments;
-}
 
+    @PrePersist
+    @PreUpdate
+    private void normalizeLicensePlateBeforeSave() {
+        this.licensePlate = normalize(this.licensePlate);
+    }
+
+    public static String normalize(String licensePlate) {
+        if (licensePlate == null) {
+            return null;
+        }
+        String normalized = licensePlate.trim().toUpperCase().replaceAll("\\s+", " ");
+        return normalized.isEmpty() ? null : normalized;
+    }
+}

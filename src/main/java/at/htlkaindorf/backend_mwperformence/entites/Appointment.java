@@ -67,6 +67,23 @@ public class Appointment {
     @EqualsAndHashCode.Exclude
     private ServiceEntity serviceEntity;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "offer_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Offer offer;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "appointment_services",
+            joinColumns = @JoinColumn(name = "appointment_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id"))
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<ServiceEntity> services;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {

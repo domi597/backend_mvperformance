@@ -31,8 +31,10 @@ public class TimeslotController {
     }
 
     @PostMapping
-    public ResponseEntity<List<TimeslotDTO>> getAvailable(@RequestParam LocalDate date) {
-        return ResponseEntity.ok(timeslotService.getAvailable(date));
+    public ResponseEntity<List<TimeslotDTO>> getAvailable(
+            @RequestParam LocalDate date,
+            @RequestParam(required = false, defaultValue = "30") Integer duration) {
+        return ResponseEntity.ok(timeslotService.getAvailable(date, duration));
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

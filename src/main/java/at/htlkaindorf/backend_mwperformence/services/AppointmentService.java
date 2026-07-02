@@ -3,10 +3,12 @@ package at.htlkaindorf.backend_mwperformence.services;
 import at.htlkaindorf.backend_mwperformence.dtos.AppointmentDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
+import at.htlkaindorf.backend_mwperformence.entites.Offer;
 import at.htlkaindorf.backend_mwperformence.entites.ServiceEntity;
 import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.mapper.AppointmentMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
+import at.htlkaindorf.backend_mwperformence.repositories.OfferRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.ServiceRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.VehicleRepository;
@@ -19,18 +21,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {
+
+    private static final int DEFAULT_DURATION_MINUTES = 30;
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final ServiceRepository serviceRepository;
+    private final OfferRepository offerRepository;
+    private final MailService mailService;
 
     public Page<AppointmentDTO> getActiveAppointments(Pageable pageable) {
         return appointmentRepository.findByStatusNotIn(
@@ -50,12 +60,6 @@ public class AppointmentService {
                 .map(appointmentMapper::toDto);
     }
 
-    /**
-     * Liefert alle Termine für die Kalenderansicht (Monat/Woche/Tag im Admin-Bereich).
-     * Zeigt bewusst auch abgeschlossene und vergangene Termine, nur abgelehnte
-     * Termine werden ausgeblendet. Unpaginiert, da der Kalender den kompletten
-     * Datensatz für die aktuelle Ansicht braucht.
-     */
     public List<AppointmentDTO> getCalendarAppointments() {
         return appointmentMapper.toDto(
                 appointmentRepository.findByStatusNotInOrderByPreferredDateAsc(
@@ -85,43 +89,123 @@ public class AppointmentService {
         }
 
         if (dto.getLicensePlate() != null) {
-            var v = vehicleRepository.findByLicensePlate(dto.getLicensePlate())
+            String normalizedPlate = Vehicle.normalize(dto.getLicensePlate());
+            var v = vehicleRepository.findByLicensePlate(normalizedPlate)
                     .orElseGet(() -> vehicleRepository.save(Vehicle.builder()
                             .brand(dto.getBrand())
                             .model(dto.getModel())
                             .buildYear(dto.getYear())
-                            .licensePlate(dto.getLicensePlate())
+                            .licensePlate(normalizedPlate)
                             .user(appointment.getUser())
                             .build()));
             appointment.setVehicleEntity(v);
             appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
         }
 
-        Optional<ServiceEntity> serviceOpt = Optional.empty();
-
-        if (dto.getServiceId() != null) {
-            serviceOpt = serviceRepository.findById(dto.getServiceId());
-        }
-        if (serviceOpt.isEmpty() && dto.getServiceType() != null && !dto.getServiceType().isBlank()) {
-            serviceOpt = serviceRepository.findByTitleIgnoreCase(dto.getServiceType());
+        Offer offer = null;
+        if (dto.getOfferId() != null) {
+            offer = offerRepository.findById(dto.getOfferId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Angebot nicht gefunden: " + dto.getOfferId()));
+            appointment.setOffer(offer);
         }
 
-        if (serviceOpt.isPresent()) {
-            ServiceEntity s = serviceOpt.get();
-            appointment.setServiceEntity(s);
-            appointment.setServiceType(s.getTitle());
+        List<ServiceEntity> selectedServices = new ArrayList<>();
+        if (dto.getServiceIds() != null && !dto.getServiceIds().isEmpty()) {
+            selectedServices = dto.getServiceIds().stream()
+                    .map(id -> serviceRepository.findById(id)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leistung nicht gefunden: " + id)))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        } else if (offer != null && offer.getServiceEntities() != null) {
+            selectedServices = new ArrayList<>(offer.getServiceEntities());
+        } else {
+            Optional<ServiceEntity> serviceOpt = Optional.empty();
+            if (dto.getServiceId() != null) {
+                serviceOpt = serviceRepository.findById(dto.getServiceId());
+            }
+            if (serviceOpt.isEmpty() && dto.getServiceType() != null && !dto.getServiceType().isBlank()) {
+                serviceOpt = serviceRepository.findByTitleIgnoreCase(dto.getServiceType());
+            }
+            serviceOpt.ifPresent(selectedServices::add);
         }
+
+        if (!selectedServices.isEmpty()) {
+            appointment.setServices(selectedServices);
+            appointment.setServiceEntity(selectedServices.get(0));
+            appointment.setServiceType(
+                    selectedServices.stream().map(ServiceEntity::getTitle).collect(Collectors.joining(", "))
+            );
+        }
+
+        int duration;
+        if (offer != null && offer.getDuration() != null && offer.getDuration() > 0) {
+            duration = offer.getDuration();
+        } else if (!selectedServices.isEmpty()) {
+            duration = selectedServices.stream()
+                    .mapToInt(s -> s.getDuration() != null ? s.getDuration() : 0)
+                    .sum();
+            if (duration <= 0) duration = DEFAULT_DURATION_MINUTES;
+        } else {
+            duration = DEFAULT_DURATION_MINUTES;
+        }
+        appointment.setDurationMinutes(duration);
+
+        if (appointment.getPrice() == null) {
+            if (offer != null && offer.getPrice() != null) {
+                appointment.setPrice(offer.getPrice());
+            } else if (!selectedServices.isEmpty()) {
+                appointment.setPrice(
+                        selectedServices.stream().mapToDouble(s -> s.getPrice() != null ? s.getPrice() : 0).sum());
+            } else {
+                appointment.setPrice(0.0);
+            }
+        }
+
+        validateSlotAvailability(appointment.getPreferredDate(), duration, null);
 
         appointment.setStatus(AppointmentStatus.NEU);
-        return appointmentMapper.toDto(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        mailService.sendAppointmentConfirmation(saved);
+
+        return appointmentMapper.toDto(saved);
+    }
+
+    private void validateSlotAvailability(LocalDateTime preferredDate, int duration, Long excludeAppointmentId) {
+        if (preferredDate == null) return;
+
+        LocalTime start = preferredDate.toLocalTime();
+        LocalTime end = start.plusMinutes(duration);
+
+        boolean overlap = appointmentRepository.getAllAppointments(preferredDate.toLocalDate()).stream()
+                .filter(a -> excludeAppointmentId == null || !excludeAppointmentId.equals(a.getId()))
+                .filter(a -> a.getStatus() != AppointmentStatus.ABGELEHNT)
+                .anyMatch(a -> {
+                    LocalTime otherStart = a.getPreferredDate().toLocalTime();
+                    int otherDuration = a.getDurationMinutes() != null ? a.getDurationMinutes() : DEFAULT_DURATION_MINUTES;
+                    LocalTime otherEnd = otherStart.plusMinutes(otherDuration);
+                    return start.isBefore(otherEnd) && otherStart.isBefore(end);
+                });
+
+        if (overlap) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Der gewählte Termin überschneidet sich mit einem bereits gebuchten Termin. Bitte wählen Sie einen anderen Zeitpunkt.");
+        }
     }
 
     @Transactional
     public AppointmentDTO updateStatus(Long id, AppointmentStatus status) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
+
+        AppointmentStatus oldStatus = appointment.getStatus();
         appointment.setStatus(status);
-        return appointmentMapper.toDto(appointmentRepository.save(appointment));
+        Appointment saved = appointmentRepository.save(appointment);
+
+        if (status != AppointmentStatus.AUSSTEHEND && status != oldStatus) {
+            mailService.sendAppointmentStatusUpdate(saved);
+        }
+
+        return appointmentMapper.toDto(saved);
     }
 
     @Transactional

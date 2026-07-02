@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Project: backend_MWPerformence
@@ -36,4 +37,10 @@ public class AppointmentDTO {
     private String createdAt;     // ISO-8601 String
     private Long vehicleId;
     private Long serviceId;
+
+    private Long offerId;
+
+    private List<Long> serviceIds;
+
+    private Integer durationMinutes;
 }
