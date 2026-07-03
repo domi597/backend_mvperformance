@@ -13,19 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Central Spring Security configuration for the application.
- * CSRF protection is disabled because the API is stateless and uses JWT.
- * Session management is set to STATELESS so no HTTP session is created or used.
- * Public endpoints (auth, services, offers, opening hours, contact info, reviews,
- * Swagger UI, Actuator) are accessible without authentication.
- * The /api/users/** endpoints are restricted to users with the ADMIN role.
- * All other endpoints require a valid JWT.
- * The {@link JwtAuthenticationFilter} is inserted before the default
- * {@link UsernamePasswordAuthenticationFilter} so JWT tokens are evaluated first.
- *
- * @author Nici0211
- */
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -43,27 +30,39 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers(
-                    "/api/auth/**",
-                    "/api/services/**",
-                    "/api/offers/**",
-                    "/api/opening-hours/**",
-                    "/api/contact-info/**",
-                    "/api/reviews/**",
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/actuator/**"
-                ).permitAll()
-                // Admin-only endpoints
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                // Everything else requires authentication
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/services/**",
+                                "/api/offers/**",
+                                "/api/opening-hours/**",
+                                "/api/contact-info/**",
+                                "/api/reviews/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll()
+                        // Admin-only: full customer list (used by the admin dashboard)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users").hasRole("ADMIN")
+                        // Self-service: a customer may cancel their own appointment (ownership checked in service layer)
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/appointments/*/cancel").authenticated()
+                        // Admin-only: arbitrary status changes (accept/decline/complete) on any appointment
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/appointments/*/status").hasRole("ADMIN")
+                        // Admin-only: deleting appointments
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/appointments/*").hasRole("ADMIN")
+                        // Admin-only: resetting another user's password without knowing the old one
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/users/*/password").hasRole("ADMIN")
+                        // Self-service profile endpoints (view/update/delete own account, change own password)
+                        // and admin customer management — both share these routes. Ownership (self vs. ADMIN)
+                        // is enforced in UserService for each individual route.
+                        .requestMatchers("/api/users/**").authenticated()
+                        // Everything else requires authentication
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

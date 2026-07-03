@@ -40,4 +40,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     long countByUserIdAndStatusIn(Long userId, List<AppointmentStatus> statuses);
 
     List<Appointment> findByUserId(Long userId);
+
+    @Query("SELECT a FROM Appointment a WHERE a.user.id = :userId AND a.status <> :excludedStatus ORDER BY a.preferredDate DESC")
+    List<Appointment> findByUserIdAndStatusNotOrderByPreferredDateDesc(Long userId, AppointmentStatus excludedStatus);
 }

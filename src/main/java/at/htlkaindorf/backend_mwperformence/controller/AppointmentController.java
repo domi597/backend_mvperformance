@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -63,6 +64,15 @@ public class AppointmentController {
     }
 
     /**
+     * Liefert alle Termine des eingeloggten Kunden (vergangene und zukünftige).
+     * Abgelehnte Termine werden ausgeblendet. Unpaginiert.
+     */
+    @GetMapping("/my")
+    public ResponseEntity<List<AppointmentDTO>> getMyAppointments(Authentication authentication) {
+        return ResponseEntity.ok(appointmentService.getMyAppointments(authentication));
+    }
+
+    /**
      * @param id the ID of the appointment
      */
     @GetMapping("/{id}")
@@ -90,6 +100,17 @@ public class AppointmentController {
             @RequestBody StatusUpdateRequest request) {
         return ResponseEntity.ok(
                 appointmentService.updateStatus(id, request.getStatus()));
+    }
+
+    /**
+     * Storniert einen eigenen Termin (Kunden-Selbstbedienung). Nur der Besitzer des
+     * Termins oder ein ADMIN darf ihn stornieren.
+     *
+     * @param id the ID of the appointment to cancel
+     */
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<AppointmentDTO> cancel(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(appointmentService.cancelAppointment(id, authentication));
     }
 
     /**

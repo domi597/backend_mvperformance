@@ -5,6 +5,7 @@ import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
 import at.htlkaindorf.backend_mwperformence.entites.Offer;
 import at.htlkaindorf.backend_mwperformence.entites.ServiceEntity;
+import at.htlkaindorf.backend_mwperformence.entites.User;
 import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.mapper.AppointmentMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -44,7 +46,7 @@ public class AppointmentService {
 
     public Page<AppointmentDTO> getActiveAppointments(Pageable pageable) {
         return appointmentRepository.findByStatusNotIn(
-                        List.of(AppointmentStatus.ABGESCHLOSSEN, AppointmentStatus.ABGELEHNT), pageable)
+                        List.of(AppointmentStatus.ABGESCHLOSSEN, AppointmentStatus.ABGELEHNT, AppointmentStatus.STORNIERT), pageable)
                 .map(appointmentMapper::toDto);
     }
 
@@ -63,7 +65,7 @@ public class AppointmentService {
     public List<AppointmentDTO> getCalendarAppointments() {
         return appointmentMapper.toDto(
                 appointmentRepository.findByStatusNotInOrderByPreferredDateAsc(
-                        List.of(AppointmentStatus.ABGELEHNT)));
+                        List.of(AppointmentStatus.ABGELEHNT, AppointmentStatus.STORNIERT)));
     }
 
     public AppointmentDTO getById(Long id) {
@@ -71,6 +73,22 @@ public class AppointmentService {
                 appointmentRepository.findById(id)
                         .orElseThrow(() -> new ResponseStatusException(
                                 HttpStatus.NOT_FOUND, "Termin mit ID " + id + " nicht gefunden.")));
+    }
+
+    /**
+     * Liefert alle Termine des eingeloggten Kunden — vergangene und zukünftige,
+     * neueste zuerst. Abgelehnte Termine werden nicht angezeigt.
+     */
+    public List<AppointmentDTO> getMyAppointments(Authentication authentication) {
+        User user = currentUser(authentication);
+        return appointmentMapper.toDto(
+                appointmentRepository.findByUserIdAndStatusNotOrderByPreferredDateDesc(
+                        user.getId(), AppointmentStatus.ABGELEHNT));
+    }
+
+    private User currentUser(Authentication authentication) {
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benutzer nicht gefunden."));
     }
 
     @Transactional
@@ -178,7 +196,7 @@ public class AppointmentService {
 
         boolean overlap = appointmentRepository.getAllAppointments(preferredDate.toLocalDate()).stream()
                 .filter(a -> excludeAppointmentId == null || !excludeAppointmentId.equals(a.getId()))
-                .filter(a -> a.getStatus() != AppointmentStatus.ABGELEHNT)
+                .filter(a -> a.getStatus() != AppointmentStatus.ABGELEHNT && a.getStatus() != AppointmentStatus.STORNIERT)
                 .anyMatch(a -> {
                     LocalTime otherStart = a.getPreferredDate().toLocalTime();
                     int otherDuration = a.getDurationMinutes() != null ? a.getDurationMinutes() : DEFAULT_DURATION_MINUTES;
@@ -204,6 +222,41 @@ public class AppointmentService {
         if (status != AppointmentStatus.AUSSTEHEND && status != oldStatus) {
             mailService.sendAppointmentStatusUpdate(saved);
         }
+
+        return appointmentMapper.toDto(saved);
+    }
+
+    /** Termin-Status, ab denen eine Stornierung durch den Kunden nicht mehr möglich ist. */
+    private static final List<AppointmentStatus> NOT_CANCELLABLE = List.of(
+            AppointmentStatus.ABGESCHLOSSEN, AppointmentStatus.ABGELEHNT, AppointmentStatus.STORNIERT
+    );
+
+    /**
+     * Storniert einen eigenen Termin. Nur der Kunde, dem der Termin gehört (oder ein
+     * ADMIN), darf dies tun; bereits abgeschlossene, abgelehnte oder schon stornierte
+     * Termine können nicht (erneut) storniert werden.
+     */
+    @Transactional
+    public AppointmentDTO cancelAppointment(Long id, Authentication authentication) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
+
+        User requester = currentUser(authentication);
+        boolean isAdmin = requester.getRole() == at.htlkaindorf.backend_mwperformence.entites.Role.ADMIN;
+        boolean isOwner = appointment.getUser() != null && appointment.getUser().getId().equals(requester.getId());
+        if (!isAdmin && !isOwner) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Du kannst nur deine eigenen Termine stornieren.");
+        }
+
+        if (NOT_CANCELLABLE.contains(appointment.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Dieser Termin kann nicht mehr storniert werden.");
+        }
+
+        appointment.setStatus(AppointmentStatus.STORNIERT);
+        Appointment saved = appointmentRepository.save(appointment);
+
+        mailService.sendAppointmentStatusUpdate(saved);
 
         return appointmentMapper.toDto(saved);
     }

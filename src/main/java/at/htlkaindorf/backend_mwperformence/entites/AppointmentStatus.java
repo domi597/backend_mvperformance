@@ -11,5 +11,6 @@ public enum AppointmentStatus {
     BESTÄTIGT,
     AUSSTEHEND,
     ABGELEHNT,
-    ABGESCHLOSSEN
+    ABGESCHLOSSEN,
+    STORNIERT
 }
