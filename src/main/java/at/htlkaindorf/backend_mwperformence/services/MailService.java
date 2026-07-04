@@ -1,6 +1,7 @@
 package at.htlkaindorf.backend_mwperformence.services;
 
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
+import at.htlkaindorf.backend_mwperformence.entites.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -89,6 +90,41 @@ public class MailService {
             log.error("Status-Update-Mail für Termin {} konnte nicht erstellt werden: {}", appointment.getId(), e.getMessage());
         } catch (Exception e) {
             log.error("Status-Update-Mail für Termin {} konnte nicht versendet werden: {}", appointment.getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Versendet die E-Mail mit dem "Passwort zurücksetzen"-Link an den Nutzer.
+     * Wird stillschweigend übersprungen, wenn der Nutzer keine E-Mail-Adresse hat
+     * (kommt praktisch nicht vor, da E-Mail Pflichtfeld ist) oder der Versand fehlschlägt –
+     * ein Mail-Fehler soll den "Passwort vergessen"-Ablauf nicht mit einem 500er abbrechen.
+     *
+     * @param user      der Nutzer, für den ein neues Passwort angefordert wurde
+     * @param resetLink der fertige Link inkl. Token, den der Nutzer anklickt
+     */
+    public void sendPasswordResetEmail(User user, String resetLink) {
+        String recipient = user.getEmail();
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("Keine E-Mail-Adresse für Passwort-Reset (User {}) vorhanden – E-Mail wird nicht versendet.", user.getId());
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(recipient);
+            helper.setSubject("Passwort zurücksetzen – " + fromName);
+            helper.setText(buildPasswordResetHtmlBody(user, resetLink), true);
+
+            mailSender.send(message);
+            log.info("Passwort-Reset-Mail an {} versendet.", recipient);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Passwort-Reset-Mail konnte nicht erstellt werden: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Passwort-Reset-Mail konnte nicht versendet werden: {}", e.getMessage());
         }
     }
 
@@ -186,6 +222,32 @@ public class MailService {
         sb.append("</table>");
 
         sb.append("<p style=\"color:#555;font-size:14px;\">Bei Fragen können Sie uns jederzeit kontaktieren.</p>");
+        sb.append("<p style=\"margin-top:24px;\">Mit freundlichen Grüßen<br/>Ihr ").append(escape(fromName)).append(" Team</p>");
+        sb.append("</div>");
+        sb.append("<p style=\"color:#999;font-size:12px;text-align:center;margin-top:12px;\">Dies ist eine automatisch generierte E-Mail, bitte antworten Sie nicht darauf.</p>");
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private String buildPasswordResetHtmlBody(User user, String resetLink) {
+        String customerName = (user.getFirstName() != null && !user.getFirstName().isBlank())
+                ? user.getFirstName() : "Kunde/-in";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;\">");
+        sb.append("<div style=\"background:#111;padding:20px 24px;border-radius:8px 8px 0 0;\">");
+        sb.append("<h1 style=\"color:#ff6b00;margin:0;font-size:22px;\">").append(escape(fromName)).append("</h1>");
+        sb.append("</div>");
+        sb.append("<div style=\"border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 8px 8px;\">");
+        sb.append("<h2 style=\"margin-top:0;font-size:18px;\">Passwort zurücksetzen</h2>");
+        sb.append("<p>Hallo ").append(escape(customerName)).append(",</p>");
+        sb.append("<p>wir haben eine Anfrage erhalten, das Passwort für Ihr Konto zurückzusetzen. ")
+                .append("Klicken Sie auf den folgenden Button, um ein neues Passwort zu vergeben:</p>");
+        sb.append("<p style=\"text-align:center;margin:28px 0;\">");
+        sb.append("<a href=\"").append(resetLink).append("\" style=\"background:#ff6b00;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:600;display:inline-block;\">Neues Passwort vergeben</a>");
+        sb.append("</p>");
+        sb.append("<p style=\"color:#555;font-size:14px;\">Der Link ist 60 Minuten gültig. Falls Sie diese Anfrage nicht gestellt haben, ")
+                .append("können Sie diese E-Mail einfach ignorieren – Ihr Passwort bleibt unverändert.</p>");
         sb.append("<p style=\"margin-top:24px;\">Mit freundlichen Grüßen<br/>Ihr ").append(escape(fromName)).append(" Team</p>");
         sb.append("</div>");
         sb.append("<p style=\"color:#999;font-size:12px;text-align:center;margin-top:12px;\">Dies ist eine automatisch generierte E-Mail, bitte antworten Sie nicht darauf.</p>");

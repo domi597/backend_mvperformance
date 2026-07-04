@@ -11,6 +11,8 @@ import at.htlkaindorf.backend_mwperformence.mapper.UserMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +25,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
-    /** Termin-Status, die als "offen" gelten und ein Löschen des Kunden verhindern. */
     private static final List<AppointmentStatus> OPEN_STATUSES = List.of(
             AppointmentStatus.NEU,
             AppointmentStatus.AUSSTEHEND,
@@ -73,8 +74,12 @@ public class UserService {
                 .orElseThrow(() -> new ApiException("Benutzer nicht gefunden.", HttpStatus.NOT_FOUND)));
     }
 
-    public List<UserDTO> getAll() {
-        return userMapper.toDTOList(userRepository.findAll());
+    public Page<UserDTO> getAll(String search, Pageable pageable) {
+        Page<User> page = (search == null || search.isBlank())
+                ? userRepository.findAll(pageable)
+                : userRepository.search(search.trim(), pageable);
+
+        return page.map(userMapper::toDTO);
     }
 
     @Transactional

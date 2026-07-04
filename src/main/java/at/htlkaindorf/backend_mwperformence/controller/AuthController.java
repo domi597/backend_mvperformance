@@ -1,8 +1,10 @@
 package at.htlkaindorf.backend_mwperformence.controller;
 
 import at.htlkaindorf.backend_mwperformence.dtos.AuthResponse;
+import at.htlkaindorf.backend_mwperformence.dtos.ForgotPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.LoginRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.RegisterRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.ResetPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
 import at.htlkaindorf.backend_mwperformence.services.AuthService;
 import jakarta.validation.Valid;
@@ -55,5 +57,32 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    }
+
+    /**
+     * Startet den "Passwort vergessen"-Vorgang: verschickt, falls ein Konto mit dieser
+     * E-Mail existiert, einen Reset-Link. Antwortet unabhängig davon immer mit
+     * {@code 204 No Content}, damit nicht erkennbar ist, ob die E-Mail registriert ist.
+     * {@code POST /api/auth/forgot-password}
+     *
+     * @param request die E-Mail-Adresse, an die der Reset-Link geschickt werden soll
+     */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Schließt den "Passwort vergessen"-Vorgang ab und setzt ein neues Passwort,
+     * sofern der Token gültig und nicht abgelaufen ist.
+     * {@code POST /api/auth/reset-password}
+     *
+     * @param request Reset-Token samt neuem Passwort (zweifach eingegeben)
+     */
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.noContent().build();
     }
 }

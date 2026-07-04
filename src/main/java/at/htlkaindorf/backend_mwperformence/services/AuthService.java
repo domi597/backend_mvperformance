@@ -2,8 +2,10 @@ package at.htlkaindorf.backend_mwperformence.services;
 
 import at.htlkaindorf.backend_mwperformence.config.JwtService;
 import at.htlkaindorf.backend_mwperformence.dtos.AuthResponse;
+import at.htlkaindorf.backend_mwperformence.dtos.ForgotPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.LoginRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.RegisterRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.ResetPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Role;
 import at.htlkaindorf.backend_mwperformence.entites.User;
@@ -13,17 +15,21 @@ import at.htlkaindorf.backend_mwperformence.mapper.UserMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.VehicleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * Service responsible for user authentication and registration.
- * Handles credential verification during login and account creation during registration.
- * On success, both operations return a signed JWT together with basic user information.
+ * Handles credential verification during login, account creation during registration,
+ * and the "Passwort vergessen" flow (reset-token generation, validation and consumption).
+ * On success, login/register return a signed JWT together with basic user information.
  *
  * @author Nici0211
  */
@@ -31,11 +37,19 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class AuthService {
 
+    /** Wie lange ein Passwort-Reset-Link gültig ist, bevor er abläuft. */
+    private static final int RESET_TOKEN_VALID_MINUTES = 60;
+
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final MailService mailService;
+
+    /** Basis-URL des Frontends, um daraus den anklickbaren Reset-Link zu bauen. */
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     /**
      * Authenticates a user by verifying their e-mail and password.
@@ -116,6 +130,53 @@ public class AuthService {
                 .token(token)
                 .user(toDTO(user))
                 .build();
+    }
+
+    /**
+     * Startet den "Passwort vergessen"-Vorgang für die angegebene E-Mail-Adresse.
+     * Antwortet dem Aufrufer bewusst immer gleich (kein Fehler, kein 404), egal ob die
+     * E-Mail existiert oder nicht – so lässt sich nicht erraten, welche Adressen registriert sind.
+     * Existiert ein Konto, wird ein Reset-Token erzeugt und ein Link per Mail versendet.
+     *
+     * @param request die E-Mail-Adresse, an die der Reset-Link geschickt werden soll
+     */
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            String token = UUID.randomUUID().toString();
+            user.setResetToken(token);
+            user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(RESET_TOKEN_VALID_MINUTES));
+            userRepository.save(user);
+
+            String resetLink = frontendUrl + "/passwort-zuruecksetzen?token=" + token;
+            mailService.sendPasswordResetEmail(user, resetLink);
+        });
+    }
+
+    /**
+     * Schließt den "Passwort vergessen"-Vorgang ab: prüft den Token und setzt das neue Passwort.
+     * Wirft eine {@link ApiException} ({@code 400}), wenn der Token unbekannt, bereits verwendet
+     * oder abgelaufen ist, oder wenn die beiden eingegebenen Passwörter nicht übereinstimmen.
+     *
+     * @param request Reset-Token aus dem E-Mail-Link samt neuem Passwort (zweifach eingegeben)
+     */
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByResetToken(request.getToken())
+                .orElseThrow(() -> new ApiException("Ungültiger oder abgelaufener Link.", HttpStatus.BAD_REQUEST));
+
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new ApiException("Ungültiger oder abgelaufener Link.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!request.getNewPassword().equals(request.getNewPasswordConfirm())) {
+            throw new ApiException("Die neuen Passwörter stimmen nicht überein.", HttpStatus.BAD_REQUEST);
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        userRepository.save(user);
     }
 
     /**
