@@ -44,7 +44,7 @@ public class SecurityConfig {
                                 "/api/reviews/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/actuator/**"
+                                "/actuator/health"
                         ).permitAll()
                         // Admin-only: full customer list (used by the admin dashboard)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users").hasRole("ADMIN")
