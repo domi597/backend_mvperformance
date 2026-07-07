@@ -128,6 +128,68 @@ public class MailService {
         }
     }
 
+    /**
+     * Versendet den 6-stelligen Bestätigungscode, mit dem ein neu registrierter Nutzer
+     * seine E-Mail-Adresse verifiziert. Ein Mail-Fehler wird nur geloggt, damit der
+     * Registrierungs-Vorgang selbst nicht mit einem 500er abbricht.
+     *
+     * @param user der neu registrierte Nutzer
+     * @param code der 6-stellige Bestätigungscode
+     */
+    public void sendVerificationEmail(User user, String code) {
+        String recipient = user.getEmail();
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("Keine E-Mail-Adresse für Verifizierung (User {}) vorhanden – E-Mail wird nicht versendet.", user.getId());
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(recipient);
+            helper.setSubject("Bestätige deine E-Mail-Adresse – " + fromName);
+            helper.setText(buildVerificationHtmlBody(user, code), true);
+
+            mailSender.send(message);
+            log.info("Verifizierungs-Mail an {} versendet.", recipient);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Verifizierungs-Mail konnte nicht erstellt werden: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Verifizierungs-Mail konnte nicht versendet werden: {}", e.getMessage());
+        }
+    }
+
+    private String buildVerificationHtmlBody(User user, String code) {
+        String customerName = (user.getFirstName() != null && !user.getFirstName().isBlank())
+                ? user.getFirstName() : "Kunde/-in";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;\">");
+        sb.append("<div style=\"background:#111;padding:20px 24px;border-radius:8px 8px 0 0;\">");
+        sb.append("<h1 style=\"color:#ff6b00;margin:0;font-size:22px;\">").append(escape(fromName)).append("</h1>");
+        sb.append("</div>");
+        sb.append("<div style=\"border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 8px 8px;\">");
+        sb.append("<h2 style=\"margin-top:0;font-size:18px;\">E-Mail-Adresse bestätigen</h2>");
+        sb.append("<p>Hallo ").append(escape(customerName)).append(",</p>");
+        sb.append("<p>vielen Dank für deine Registrierung. Gib den folgenden Code ein, um deine E-Mail-Adresse zu bestätigen:</p>");
+        sb.append("<p style=\"text-align:center;margin:28px 0;\">");
+        sb.append("<span style=\"display:inline-block;background:#f5f5f5;color:#111;font-size:32px;font-weight:700;letter-spacing:8px;padding:16px 24px;border-radius:8px;\">")
+                .append(escape(code)).append("</span>");
+        sb.append("</p>");
+        sb.append("<p style=\"color:#555;font-size:14px;\">Der Code ist ").append(VERIFICATION_CODE_VALID_MINUTES_LABEL)
+                .append(" gültig. Falls du dich nicht registriert hast, kannst du diese E-Mail einfach ignorieren.</p>");
+        sb.append("<p style=\"margin-top:24px;\">Mit freundlichen Grüßen<br/>Dein ").append(escape(fromName)).append(" Team</p>");
+        sb.append("</div>");
+        sb.append("<p style=\"color:#999;font-size:12px;text-align:center;margin-top:12px;\">Dies ist eine automatisch generierte E-Mail, bitte antworten Sie nicht darauf.</p>");
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private static final String VERIFICATION_CODE_VALID_MINUTES_LABEL = "15 Minuten";
+
     private String safeServiceType(Appointment appointment) {
         return (appointment.getServiceType() != null && !appointment.getServiceType().isBlank())
                 ? appointment.getServiceType()

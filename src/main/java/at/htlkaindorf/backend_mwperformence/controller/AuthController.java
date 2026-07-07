@@ -3,9 +3,12 @@ package at.htlkaindorf.backend_mwperformence.controller;
 import at.htlkaindorf.backend_mwperformence.dtos.AuthResponse;
 import at.htlkaindorf.backend_mwperformence.dtos.ForgotPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.LoginRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.PendingVerificationResponse;
 import at.htlkaindorf.backend_mwperformence.dtos.RegisterRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.ResendVerificationRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.ResetPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
+import at.htlkaindorf.backend_mwperformence.dtos.VerifyEmailRequest;
 import at.htlkaindorf.backend_mwperformence.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +58,34 @@ public class AuthController {
      * @return {@code 201 Created} with an {@link AuthResponse} containing the JWT and user data
      */
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    public ResponseEntity<PendingVerificationResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(authService.register(request));
+    }
+
+    /**
+     * Bestätigt die E-Mail-Adresse eines frisch registrierten Kontos anhand des per Mail
+     * verschickten 6-stelligen Codes. Bei Erfolg wird das Konto aktiviert und ein JWT ausgestellt.
+     * {@code POST /api/auth/verify-email}
+     *
+     * @param request E-Mail-Adresse samt eingegebenem Code, validiert via {@code @Valid}
+     * @return {@code 200 OK} mit einem {@link AuthResponse} inkl. JWT und Nutzerdaten
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<AuthResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        return ResponseEntity.ok(authService.verifyEmail(request));
+    }
+
+    /**
+     * Verschickt einen neuen Bestätigungscode für ein noch nicht verifiziertes Konto.
+     * Antwortet unabhängig vom Ergebnis immer mit {@code 204 No Content}.
+     * {@code POST /api/auth/resend-verification}
+     *
+     * @param request die E-Mail-Adresse, für die ein neuer Code verschickt werden soll
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request);
+        return ResponseEntity.noContent().build();
     }
 
     /**

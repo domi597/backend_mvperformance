@@ -42,6 +42,7 @@ public class GlobalExceptionHandler {
                         case "lastName"   -> "Nachname darf nicht leer sein.";
                         case "email"      -> "Bitte eine gültige E-Mail-Adresse eingeben.";
                         case "password"   -> "Passwort muss mindestens 6 Zeichen haben.";
+                        case "code"       -> "Der Code muss aus 6 Ziffern bestehen.";
                         default           -> e.getDefaultMessage();
                     };
                 })

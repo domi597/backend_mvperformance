@@ -106,7 +106,21 @@ public class AppointmentService {
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User nicht gefunden")));
         }
 
-        if (dto.getLicensePlate() != null) {
+        if (dto.getVehicleId() != null) {
+            // Kunde hat eines seiner bereits gespeicherten Fahrzeuge ausgewählt.
+            Vehicle v = vehicleRepository.findById(dto.getVehicleId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fahrzeug nicht gefunden."));
+
+            if (appointment.getUser() != null && v.getUser() != null
+                    && !v.getUser().getId().equals(appointment.getUser().getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dieses Fahrzeug gehört nicht zu Ihrem Konto.");
+            }
+
+            appointment.setVehicleEntity(v);
+            appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
+        } else if (dto.getLicensePlate() != null) {
+            // Kunde hat ein neues Fahrzeug manuell eingegeben – wird gesucht/angelegt
+            // und dabei automatisch im Konto des Kunden gespeichert.
             String normalizedPlate = Vehicle.normalize(dto.getLicensePlate());
             var v = vehicleRepository.findByLicensePlate(normalizedPlate)
                     .orElseGet(() -> vehicleRepository.save(Vehicle.builder()

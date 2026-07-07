@@ -4,9 +4,12 @@ import at.htlkaindorf.backend_mwperformence.config.JwtService;
 import at.htlkaindorf.backend_mwperformence.dtos.AuthResponse;
 import at.htlkaindorf.backend_mwperformence.dtos.ForgotPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.LoginRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.PendingVerificationResponse;
 import at.htlkaindorf.backend_mwperformence.dtos.RegisterRequest;
+import at.htlkaindorf.backend_mwperformence.dtos.ResendVerificationRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.ResetPasswordRequest;
 import at.htlkaindorf.backend_mwperformence.dtos.UserDTO;
+import at.htlkaindorf.backend_mwperformence.dtos.VerifyEmailRequest;
 import at.htlkaindorf.backend_mwperformence.entites.Role;
 import at.htlkaindorf.backend_mwperformence.entites.User;
 import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
@@ -40,6 +43,11 @@ public class AuthService {
     /** Wie lange ein Passwort-Reset-Link gültig ist, bevor er abläuft. */
     private static final int RESET_TOKEN_VALID_MINUTES = 60;
 
+    /** Wie lange der E-Mail-Bestätigungscode gültig ist, bevor er abläuft. */
+    private static final int VERIFICATION_CODE_VALID_MINUTES = 15;
+
+    private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
+
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final UserMapper userMapper;
@@ -67,6 +75,10 @@ public class AuthService {
             throw new ApiException("E-Mail oder Passwort ist falsch.", HttpStatus.UNAUTHORIZED);
         }
 
+        if (!user.isEmailVerified()) {
+            throw new ApiException("Bitte bestätige zuerst deine E-Mail-Adresse.", HttpStatus.FORBIDDEN);
+        }
+
         String token = jwtService.generateToken(user.getEmail());
 
         return AuthResponse.builder()
@@ -85,10 +97,12 @@ public class AuthService {
      * @return an {@link AuthResponse} containing a signed JWT and the newly created user's profile data
      */
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public PendingVerificationResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new ApiException("Diese E-Mail ist bereits vergeben.", HttpStatus.CONFLICT);
         }
+
+        String verificationCode = generateVerificationCode();
 
         User user = User.builder()
                 .firstName(request.getFirstName())
@@ -100,7 +114,10 @@ public class AuthService {
                 .zip(request.getZip())
                 .city(request.getCity())
                 .role(Role.CUSTOMER)
-                .createdAt(java.time.LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .emailVerified(false)
+                .verificationCode(verificationCode)
+                .verificationCodeExpiry(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_VALID_MINUTES))
                 .vehicles(new ArrayList<>())
                 .appointments(new ArrayList<>())
                 .reviews(new ArrayList<>())
@@ -124,12 +141,82 @@ public class AuthService {
             vehicleRepository.save(vehicle);
         }
 
+        mailService.sendVerificationEmail(user, verificationCode);
+
+        return PendingVerificationResponse.builder()
+                .email(user.getEmail())
+                .message("Wir haben dir einen Bestätigungscode an deine E-Mail-Adresse geschickt.")
+                .build();
+    }
+
+    /**
+     * Bestätigt die E-Mail-Adresse eines frisch registrierten Kontos anhand des 6-stelligen Codes,
+     * der beim Registrieren per Mail verschickt wurde. Bei Erfolg wird das Konto als verifiziert
+     * markiert und – wie bei Login/Register sonst auch – ein signiertes JWT ausgestellt.
+     * Wirft eine {@link ApiException} ({@code 400}), wenn der Code falsch oder abgelaufen ist.
+     *
+     * @param request E-Mail-Adresse samt eingegebenem 6-stelligen Code
+     * @return ein {@link AuthResponse} mit JWT und Profildaten des nun verifizierten Nutzers
+     */
+    @Transactional
+    public AuthResponse verifyEmail(VerifyEmailRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ApiException("Kein Konto mit dieser E-Mail gefunden.", HttpStatus.NOT_FOUND));
+
+        if (user.isEmailVerified()) {
+            String token = jwtService.generateToken(user.getEmail());
+            return AuthResponse.builder().token(token).user(toDTO(user)).build();
+        }
+
+        if (user.getVerificationCode() == null
+                || user.getVerificationCodeExpiry() == null
+                || user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
+            throw new ApiException("Der Code ist abgelaufen. Bitte fordere einen neuen an.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!user.getVerificationCode().equals(request.getCode())) {
+            throw new ApiException("Der eingegebene Code ist ungültig.", HttpStatus.BAD_REQUEST);
+        }
+
+        user.setEmailVerified(true);
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiry(null);
+        userRepository.save(user);
+
         String token = jwtService.generateToken(user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
                 .user(toDTO(user))
                 .build();
+    }
+
+    /**
+     * Verschickt einen neuen Bestätigungscode, falls das Konto noch nicht verifiziert ist.
+     * Antwortet auch dann ohne Fehler, wenn keine E-Mail existiert, um nicht zu verraten,
+     * welche Adressen registriert sind.
+     *
+     * @param request die E-Mail-Adresse, für die ein neuer Code verschickt werden soll
+     */
+    @Transactional
+    public void resendVerification(ResendVerificationRequest request) {
+        userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
+            if (user.isEmailVerified()) {
+                return;
+            }
+
+            String code = generateVerificationCode();
+            user.setVerificationCode(code);
+            user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(VERIFICATION_CODE_VALID_MINUTES));
+            userRepository.save(user);
+
+            mailService.sendVerificationEmail(user, code);
+        });
+    }
+
+    /** Erzeugt einen zufälligen 6-stelligen numerischen Bestätigungscode (führende Nullen möglich). */
+    private String generateVerificationCode() {
+        return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
     }
 
     /**

@@ -62,6 +62,15 @@ public class User {
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
 
+    @Column(name = "email_verified", nullable = false, columnDefinition = "boolean default true")
+    private boolean emailVerified = true;
+
+    @Column(name = "verification_code", length = 10)
+    private String verificationCode;
+
+    @Column(name = "verification_code_expiry")
+    private LocalDateTime verificationCodeExpiry;
+
     @OneToMany(mappedBy = "user", cascade = {CascadeType.MERGE, CascadeType.PERSIST}, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
