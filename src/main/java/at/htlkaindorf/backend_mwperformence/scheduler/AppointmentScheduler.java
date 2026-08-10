@@ -3,7 +3,9 @@ package at.htlkaindorf.backend_mwperformence.scheduler;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
+import at.htlkaindorf.backend_mwperformence.services.MailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +22,16 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AppointmentScheduler {
 
     private final AppointmentRepository appointmentRepository;
+    private final MailService mailService;
+
+    /** Status, die als final gelten und daher nicht mehr auf "nicht mehr machbar" geprüft werden. */
+    private static final List<AppointmentStatus> FINAL_STATES = List.of(
+            AppointmentStatus.ABGESCHLOSSEN, AppointmentStatus.ABGELEHNT, AppointmentStatus.STORNIERT
+    );
 
     @Scheduled(cron = "0 0 0 * * *")
     public void autoSetAusstehend() {
@@ -33,5 +42,23 @@ public class AppointmentScheduler {
 
         toUpdate.forEach(a -> a.setStatus(AppointmentStatus.AUSSTEHEND));
         appointmentRepository.saveAll(toUpdate);
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void autoRejectExpiredAppointments() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Appointment> expired = appointmentRepository
+                .findByPreferredDateBeforeAndStatusNotIn(now, FINAL_STATES);
+
+        for (Appointment appointment : expired) {
+            appointment.setStatus(AppointmentStatus.ABGELEHNT);
+            appointmentRepository.save(appointment);
+            mailService.sendAppointmentExpiredRejection(appointment);
+        }
+
+        if (!expired.isEmpty()) {
+            log.info("{} nicht mehr machbare(r) Termin(e) automatisch auf ABGELEHNT gesetzt.", expired.size());
+        }
     }
 }

@@ -3,6 +3,13 @@
 -- Hinweis: "contact_info" wurde entfernt, da es dafür kein Entity/Tabelle
 -- mehr im Backend gibt. "appointment_services" wird durch CASCADE
 -- automatisch mitgeleert (Appointment <-> ServiceEntity, ManyToMany).
+--
+-- UPDATE (dokumentiert): preferred_date bei appointments wurde von
+-- "CURRENT_TIMESTAMP + INTERVAL 'n days'" (zufällige Uhrzeit) auf feste
+-- Zeitstempel innerhalb der Öffnungszeiten umgestellt:
+-- Mo-Fr 08:00-17:00, Sa 09:00-13:00, So geschlossen. Dabei wurde auch
+-- duration_minutes je Termin berücksichtigt, damit kein Termin über die
+-- Schließzeit hinausläuft.
 -- ============================================================
 TRUNCATE TABLE
     opening_hours,
@@ -89,96 +96,96 @@ INSERT INTO offer_services (offer_id, service_id) VALUES (2, 12);
 -- offer_id ist bei Paket-Buchungen gesetzt, service_id dann NULL.
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 1, 1, NULL, 'Thomas Kauer', 'Service laut Hersteller', 'VW Golf 2019', CURRENT_TIMESTAMP + INTERVAL '1 day', 'NEU', 129.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 1, 1, NULL, 'Thomas Kauer', 'Service laut Hersteller', 'VW Golf 2019', '2026-08-11 08:30:00', 'NEU', 129.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 2, NULL, 'Maria Schreiner', 'Ölwechsel / Filterwechsel', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '2 days', 'AUSSTEHEND', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 2, NULL, 'Maria Schreiner', 'Ölwechsel / Filterwechsel', 'BMW X3 2021', '2026-08-12 09:00:00', 'AUSSTEHEND', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 4, 3, NULL, 'Stefan Bauer', 'Bremsen / Fahrwerktausch', 'Audi A4 2017', CURRENT_TIMESTAMP + INTERVAL '3 days', 'BESTÄTIGT', 149.99, 'Bitte auf Quietschen an der Vorderachse achten', 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 4, 3, NULL, 'Stefan Bauer', 'Bremsen / Fahrwerktausch', 'Audi A4 2017', '2026-08-13 09:30:00', 'BESTÄTIGT', 149.99, 'Bitte auf Quietschen an der Vorderachse achten', 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 2, 4, NULL, 'Thomas Kauer', '§57a Begutachtung (Pickerl)', 'Skoda Octavia 2016', CURRENT_TIMESTAMP + INTERVAL '4 days', 'ABGELEHNT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 2, 4, NULL, 'Thomas Kauer', '§57a Begutachtung (Pickerl)', 'Skoda Octavia 2016', '2026-08-14 10:00:00', 'ABGELEHNT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 5, NULL, 'Maria Schreiner', 'Ankaufstest', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '5 days', 'NEU', 79.99, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 5, NULL, 'Maria Schreiner', 'Ankaufstest', 'BMW X3 2021', '2026-08-15 09:30:00', 'NEU', 79.99, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 5, 6, NULL, 'Stefan Bauer', 'Steinschlagreparatur', 'Ford Focus 2015', CURRENT_TIMESTAMP + INTERVAL '6 days', 'ABGESCHLOSSEN', 59.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 5, 6, NULL, 'Stefan Bauer', 'Steinschlagreparatur', 'Ford Focus 2015', '2026-08-17 11:00:00', 'ABGESCHLOSSEN', 59.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 1, 7, NULL, 'Thomas Kauer', 'Windschutzscheibentausch', 'VW Golf 2019', CURRENT_TIMESTAMP + INTERVAL '7 days', 'BESTÄTIGT', 349.99, 'Ersatzscheibe wurde bereits bestellt', 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 1, 7, NULL, 'Thomas Kauer', 'Windschutzscheibentausch', 'VW Golf 2019', '2026-08-18 11:30:00', 'BESTÄTIGT', 349.99, 'Ersatzscheibe wurde bereits bestellt', 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 8, NULL, 'Maria Schreiner', 'Scheibenfolierung', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '8 days', 'NEU', 199.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 8, NULL, 'Maria Schreiner', 'Scheibenfolierung', 'BMW X3 2021', '2026-08-19 12:00:00', 'NEU', 199.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 4, 9, NULL, 'Stefan Bauer', 'Reifenmontage / Auswuchten', 'Audi A4 2017', CURRENT_TIMESTAMP + INTERVAL '9 days', 'AUSSTEHEND', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 4, 9, NULL, 'Stefan Bauer', 'Reifenmontage / Auswuchten', 'Audi A4 2017', '2026-08-20 12:30:00', 'AUSSTEHEND', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 2, 10, NULL, 'Thomas Kauer', 'Reifen umstecken', 'Skoda Octavia 2016', CURRENT_TIMESTAMP + INTERVAL '10 days', 'ABGELEHNT', 29.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 2, 10, NULL, 'Thomas Kauer', 'Reifen umstecken', 'Skoda Octavia 2016', '2026-08-21 13:00:00', 'ABGELEHNT', 29.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 11, NULL, 'Maria Schreiner', 'Neureifen', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '11 days', 'BESTÄTIGT', 89.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 11, NULL, 'Maria Schreiner', 'Neureifen', 'BMW X3 2021', '2026-08-22 09:00:00', 'BESTÄTIGT', 89.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 5, 12, NULL, 'Stefan Bauer', 'Felgen / Reifendruckkontrollsystem', 'Ford Focus 2015', CURRENT_TIMESTAMP + INTERVAL '12 days', 'ABGESCHLOSSEN', 69.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 5, 12, NULL, 'Stefan Bauer', 'Felgen / Reifendruckkontrollsystem', 'Ford Focus 2015', '2026-08-24 14:00:00', 'ABGESCHLOSSEN', 69.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 -- weitere zufällige Termine (Mischung aus Einzelleistungen und Paketen)
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 1, 2, NULL, 'Thomas Kauer', 'Ölwechsel / Filterwechsel', 'VW Golf 2019', CURRENT_TIMESTAMP + INTERVAL '13 days', 'NEU', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 1, 2, NULL, 'Thomas Kauer', 'Ölwechsel / Filterwechsel', 'VW Golf 2019', '2026-08-25 14:30:00', 'NEU', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 4, 4, NULL, 'Stefan Bauer', '§57a Begutachtung (Pickerl)', 'Audi A4 2017', CURRENT_TIMESTAMP + INTERVAL '14 days', 'BESTÄTIGT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 4, 4, NULL, 'Stefan Bauer', '§57a Begutachtung (Pickerl)', 'Audi A4 2017', '2026-08-26 15:00:00', 'BESTÄTIGT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 9, NULL, 'Maria Schreiner', 'Reifenmontage / Auswuchten', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '15 days', 'AUSSTEHEND', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 9, NULL, 'Maria Schreiner', 'Reifenmontage / Auswuchten', 'BMW X3 2021', '2026-08-27 15:30:00', 'AUSSTEHEND', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 2, 1, NULL, 'Thomas Kauer', 'Service laut Hersteller', 'Skoda Octavia 2016', CURRENT_TIMESTAMP + INTERVAL '16 days', 'ABGESCHLOSSEN', 129.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 2, 1, NULL, 'Thomas Kauer', 'Service laut Hersteller', 'Skoda Octavia 2016', '2026-08-28 08:00:00', 'ABGESCHLOSSEN', 129.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 5, 3, NULL, 'Stefan Bauer', 'Bremsen / Fahrwerktausch', 'Ford Focus 2015', CURRENT_TIMESTAMP + INTERVAL '17 days', 'NEU', 149.99, NULL, 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 5, 3, NULL, 'Stefan Bauer', 'Bremsen / Fahrwerktausch', 'Ford Focus 2015', '2026-08-29 09:00:00', 'NEU', 149.99, NULL, 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 12, NULL, 'Maria Schreiner', 'Felgen / Reifendruckkontrollsystem', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '18 days', 'ABGELEHNT', 69.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 12, NULL, 'Maria Schreiner', 'Felgen / Reifendruckkontrollsystem', 'BMW X3 2021', '2026-08-31 08:00:00', 'ABGELEHNT', 69.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 1, 10, NULL, 'Thomas Kauer', 'Reifen umstecken', 'VW Golf 2019', CURRENT_TIMESTAMP + INTERVAL '19 days', 'BESTÄTIGT', 29.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 1, 10, NULL, 'Thomas Kauer', 'Reifen umstecken', 'VW Golf 2019', '2026-09-01 08:30:00', 'BESTÄTIGT', 29.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 4, 11, NULL, 'Stefan Bauer', 'Neureifen', 'Audi A4 2017', CURRENT_TIMESTAMP + INTERVAL '20 days', 'NEU', 89.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 4, 11, NULL, 'Stefan Bauer', 'Neureifen', 'Audi A4 2017', '2026-09-02 09:00:00', 'NEU', 89.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 6, NULL, 'Maria Schreiner', 'Steinschlagreparatur', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '21 days', 'AUSSTEHEND', 59.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 6, NULL, 'Maria Schreiner', 'Steinschlagreparatur', 'BMW X3 2021', '2026-09-03 09:30:00', 'AUSSTEHEND', 59.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 2, 7, NULL, 'Thomas Kauer', 'Windschutzscheibentausch', 'Skoda Octavia 2016', CURRENT_TIMESTAMP + INTERVAL '22 days', 'ABGESCHLOSSEN', 349.99, NULL, 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 2, 7, NULL, 'Thomas Kauer', 'Windschutzscheibentausch', 'Skoda Octavia 2016', '2026-09-04 10:00:00', 'ABGESCHLOSSEN', 349.99, NULL, 120, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 5, 8, NULL, 'Stefan Bauer', 'Scheibenfolierung', 'Ford Focus 2015', CURRENT_TIMESTAMP + INTERVAL '23 days', 'BESTÄTIGT', 199.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 5, 8, NULL, 'Stefan Bauer', 'Scheibenfolierung', 'Ford Focus 2015', '2026-09-05 10:30:00', 'BESTÄTIGT', 199.99, NULL, 90, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 5, NULL, 'Maria Schreiner', 'Ankaufstest', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '24 days', 'NEU', 79.99, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 5, NULL, 'Maria Schreiner', 'Ankaufstest', 'BMW X3 2021', '2026-09-07 11:00:00', 'NEU', 79.99, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 -- Paket-Buchungen (service_id NULL, offer_id gesetzt)
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 1, NULL, 1, 'Thomas Kauer', 'Frühjahrs-Check', 'VW Golf 2019', CURRENT_TIMESTAMP + INTERVAL '25 days', 'BESTÄTIGT', 179.99, 'Paketbuchung Frühjahrs-Check', 195, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 1, NULL, 1, 'Thomas Kauer', 'Frühjahrs-Check', 'VW Golf 2019', '2026-09-08 11:30:00', 'BESTÄTIGT', 179.99, 'Paketbuchung Frühjahrs-Check', 195, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 4, NULL, 2, 'Stefan Bauer', 'Reifenwechsel-Paket', 'Audi A4 2017', CURRENT_TIMESTAMP + INTERVAL '26 days', 'NEU', 89.99, 'Paketbuchung Reifenwechsel', 75, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 4, NULL, 2, 'Stefan Bauer', 'Reifenwechsel-Paket', 'Audi A4 2017', '2026-09-09 12:00:00', 'NEU', 89.99, 'Paketbuchung Reifenwechsel', 75, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, 4, NULL, 'Maria Schreiner', '§57a Begutachtung (Pickerl)', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '27 days', 'ABGELEHNT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, 4, NULL, 'Maria Schreiner', '§57a Begutachtung (Pickerl)', 'BMW X3 2021', '2026-09-10 12:30:00', 'ABGELEHNT', 120.00, NULL, 60, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (2, 2, 2, NULL, 'Thomas Kauer', 'Ölwechsel / Filterwechsel', 'Skoda Octavia 2016', CURRENT_TIMESTAMP + INTERVAL '28 days', 'ABGESCHLOSSEN', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (2, 2, 2, NULL, 'Thomas Kauer', 'Ölwechsel / Filterwechsel', 'Skoda Octavia 2016', '2026-09-11 13:00:00', 'ABGESCHLOSSEN', 49.99, NULL, 30, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (4, 5, 9, NULL, 'Stefan Bauer', 'Reifenmontage / Auswuchten', 'Ford Focus 2015', CURRENT_TIMESTAMP + INTERVAL '29 days', 'BESTÄTIGT', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (4, 5, 9, NULL, 'Stefan Bauer', 'Reifenmontage / Auswuchten', 'Ford Focus 2015', '2026-09-12 09:30:00', 'BESTÄTIGT', 39.99, NULL, 45, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 INSERT INTO appointments (user_id, vehicle_id, service_id, offer_id, customer_name, service_type, vehicle, preferred_date, status, price, note, duration_minutes, created_at)
-VALUES (3, 3, NULL, 1, 'Maria Schreiner', 'Frühjahrs-Check', 'BMW X3 2021', CURRENT_TIMESTAMP + INTERVAL '30 days', 'AUSSTEHEND', 179.99, 'Paketbuchung Frühjahrs-Check', 195, CURRENT_TIMESTAMP - INTERVAL '8 days');
+VALUES (3, 3, NULL, 1, 'Maria Schreiner', 'Frühjahrs-Check', 'BMW X3 2021', '2026-09-14 08:00:00', 'AUSSTEHEND', 179.99, 'Paketbuchung Frühjahrs-Check', 195, CURRENT_TIMESTAMP - INTERVAL '8 days');
 
 -- 7. REVIEWS
 INSERT INTO reviews (user_id, name, stars, text, created_at)

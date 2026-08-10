@@ -1,12 +1,13 @@
 package at.htlkaindorf.backend_mwperformence.services;
 
-import at.htlkaindorf.backend_mwperformence.dtos.DateRequestDTO;
 import at.htlkaindorf.backend_mwperformence.dtos.TimeslotDTO;
 import at.htlkaindorf.backend_mwperformence.entites.Appointment;
 import at.htlkaindorf.backend_mwperformence.entites.AppointmentStatus;
+import at.htlkaindorf.backend_mwperformence.entites.BlockedPeriod;
 import at.htlkaindorf.backend_mwperformence.entites.Timeslot;
 import at.htlkaindorf.backend_mwperformence.mapper.TimeslotMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
+import at.htlkaindorf.backend_mwperformence.repositories.BlockedPeriodRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.TimeslotRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
@@ -36,6 +36,7 @@ public class TimeslotService {
     private final TimeslotRepository timeslotRepository;
     private final TimeslotMapper timeslotMapper;
     private final AppointmentRepository appointmentRepository;
+    private final BlockedPeriodRepository blockedPeriodRepository;
 
     public List<TimeslotDTO> getAll() {
         return timeslotMapper.toDto(
@@ -48,6 +49,22 @@ public class TimeslotService {
 
     public List<TimeslotDTO> getAvailable(LocalDate date, Integer durationMinutes) {
         int duration = (durationMinutes != null && durationMinutes > 0) ? durationMinutes : 30;
+
+        // Sperrzeiten für diesen Tag laden. Das ist die serverseitige
+        // Absicherung: ein gesperrter Slot wird hier herausgefiltert und
+        // kommt gar nicht erst als "frei" in der Antwort an, egal was das
+        // Frontend clientseitig zusätzlich ausblendet.
+        List<BlockedPeriod> blockedForDate = blockedPeriodRepository.findByDate(date);
+
+        boolean isFullyBlockedDay = blockedForDate.stream()
+                .anyMatch(b -> b.getStartTime() == null || b.getEndTime() == null);
+        if (isFullyBlockedDay) {
+            return List.of();
+        }
+
+        List<LocalTime[]> blockedTimeRanges = blockedForDate.stream()
+                .map(b -> new LocalTime[]{b.getStartTime(), b.getEndTime()})
+                .toList();
 
         List<Timeslot> allSlots = timeslotRepository.findAll().stream()
                 .sorted(Comparator.comparing(Timeslot::getTime))
@@ -87,8 +104,14 @@ public class TimeslotService {
                         cursor = cursor.plusMinutes(gridStep);
                     }
 
-                    return occupiedRanges.stream().noneMatch(occ ->
+                    boolean overlapsAppointment = occupiedRanges.stream().anyMatch(occ ->
                             start.isBefore(occ[1]) && occ[0].isBefore(end));
+                    if (overlapsAppointment) {
+                        return false;
+                    }
+
+                    return blockedTimeRanges.stream().noneMatch(blocked ->
+                            start.isBefore(blocked[1]) && blocked[0].isBefore(end));
                 })
                 .toList();
 

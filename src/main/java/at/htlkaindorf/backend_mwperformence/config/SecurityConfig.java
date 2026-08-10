@@ -46,6 +46,12 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/health"
                         ).permitAll()
+                        // Public: reading blocked periods (used on the public /termin page to
+                        // grey out blocked days/timeslots before a customer logs in)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blocked-periods").permitAll()
+                        // Admin-only: creating and deleting blocked periods
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/blocked-periods").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/blocked-periods/*").hasRole("ADMIN")
                         // Admin-only: full customer list (used by the admin dashboard)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // Self-service: a customer may cancel their own appointment (ownership checked in service layer)

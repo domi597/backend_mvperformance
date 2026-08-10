@@ -94,6 +94,38 @@ public class MailService {
     }
 
     /**
+     * Versendet die Absage-Mail für einen Termin, dessen preferred_date bereits verstrichen
+     * ist, ohne dass er rechtzeitig bearbeitet werden konnte (vom AppointmentScheduler
+     * automatisch auf ABGELEHNT gesetzt). Der Kunde wird darauf hingewiesen, dass der Termin
+     * nicht eingehalten werden konnte und er es bitte erneut versuchen soll.
+     */
+    public void sendAppointmentExpiredRejection(Appointment appointment) {
+        String recipient = appointment.getUser() != null ? appointment.getUser().getEmail() : null;
+
+        if (recipient == null || recipient.isBlank()) {
+            log.warn("Keine E-Mail-Adresse für Termin {} vorhanden – Absage-Mail (verstrichener Termin) wird nicht versendet.", appointment.getId());
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(recipient);
+            helper.setSubject("Termin konnte nicht eingehalten werden – " + safeServiceType(appointment));
+            helper.setText(buildExpiredHtmlBody(appointment), true);
+
+            mailSender.send(message);
+            log.info("Absage-Mail (verstrichener Termin) an {} für Termin {} versendet.", recipient, appointment.getId());
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Absage-Mail (verstrichener Termin) für Termin {} konnte nicht erstellt werden: {}", appointment.getId(), e.getMessage());
+        } catch (Exception e) {
+            log.error("Absage-Mail (verstrichener Termin) für Termin {} konnte nicht versendet werden: {}", appointment.getId(), e.getMessage());
+        }
+    }
+
+    /**
      * Versendet die E-Mail mit dem "Passwort zurücksetzen"-Link an den Nutzer.
      * Wird stillschweigend übersprungen, wenn der Nutzer keine E-Mail-Adresse hat
      * (kommt praktisch nicht vor, da E-Mail Pflichtfeld ist) oder der Versand fehlschlägt –
@@ -278,6 +310,54 @@ public class MailService {
         sb.append(row("Fahrzeug", vehicle));
         sb.append(row("Kennzeichen", licensePlate));
         sb.append(row("Status", statusLabel));
+        if (note != null) {
+            sb.append(row("Anmerkung", note));
+        }
+        sb.append("</table>");
+
+        sb.append("<p style=\"color:#555;font-size:14px;\">Bei Fragen können Sie uns jederzeit kontaktieren.</p>");
+        sb.append("<p style=\"margin-top:24px;\">Mit freundlichen Grüßen<br/>Ihr ").append(escape(fromName)).append(" Team</p>");
+        sb.append("</div>");
+        sb.append("<p style=\"color:#999;font-size:12px;text-align:center;margin-top:12px;\">Dies ist eine automatisch generierte E-Mail, bitte antworten Sie nicht darauf.</p>");
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private String buildExpiredHtmlBody(Appointment appointment) {
+        String customerName = (appointment.getCustomerName() != null && !appointment.getCustomerName().isBlank())
+                ? appointment.getCustomerName() : "Kunde/-in";
+        String dateStr = appointment.getPreferredDate() != null ? appointment.getPreferredDate().format(DATE_FMT) : "-";
+        String timeStr = appointment.getPreferredDate() != null ? appointment.getPreferredDate().format(TIME_FMT) + " Uhr" : "-";
+        String vehicle = (appointment.getVehicle() != null && !appointment.getVehicle().isBlank()) ? appointment.getVehicle() : "-";
+        String licensePlate = (appointment.getVehicleEntity() != null && appointment.getVehicleEntity().getLicensePlate() != null)
+                ? appointment.getVehicleEntity().getLicensePlate() : "-";
+        String priceStr = appointment.getPrice() != null
+                ? NumberFormat.getCurrencyInstance(new Locale("de", "AT")).format(appointment.getPrice())
+                : "-";
+        String duration = appointment.getDurationMinutes() != null ? appointment.getDurationMinutes() + " Min." : "-";
+        String note = (appointment.getNote() != null && !appointment.getNote().isBlank()) ? appointment.getNote() : null;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;\">");
+        sb.append("<div style=\"background:#111;padding:20px 24px;border-radius:8px 8px 0 0;\">");
+        sb.append("<h1 style=\"color:#ff6b00;margin:0;font-size:22px;\">").append(escape(fromName)).append("</h1>");
+        sb.append("</div>");
+        sb.append("<div style=\"border:1px solid #eee;border-top:none;padding:24px;border-radius:0 0 8px 8px;\">");
+        sb.append("<h2 style=\"margin-top:0;font-size:18px;\">Termin konnte nicht eingehalten werden</h2>");
+        sb.append("<p>Hallo ").append(escape(customerName)).append(",</p>");
+        sb.append("<p>leider konnte der von Ihnen gewünschte Termin nicht eingehalten werden, da der Zeitpunkt bereits ")
+                .append("verstrichen ist, ohne dass er rechtzeitig bestätigt bzw. abgeschlossen werden konnte. ")
+                .append("Bitte versuchen Sie es noch einmal und buchen Sie einen neuen Termin über unsere Website.</p>");
+
+        sb.append("<table style=\"width:100%;border-collapse:collapse;margin:16px 0;\">");
+        sb.append(row("Leistung", safeServiceType(appointment)));
+        sb.append(row("Ursprüngl. Datum", dateStr));
+        sb.append(row("Ursprüngl. Uhrzeit", timeStr));
+        sb.append(row("Dauer", duration));
+        sb.append(row("Preis", priceStr));
+        sb.append(row("Fahrzeug", vehicle));
+        sb.append(row("Kennzeichen", licensePlate));
+        sb.append(row("Status", statusLabel("ABGELEHNT")));
         if (note != null) {
             sb.append(row("Anmerkung", note));
         }

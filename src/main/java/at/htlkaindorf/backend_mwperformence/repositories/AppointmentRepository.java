@@ -43,4 +43,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     @Query("SELECT a FROM Appointment a WHERE a.user.id = :userId AND a.status <> :excludedStatus ORDER BY a.preferredDate DESC")
     List<Appointment> findByUserIdAndStatusNotOrderByPreferredDateDesc(Long userId, AppointmentStatus excludedStatus);
+
+    @Query("SELECT a FROM Appointment a WHERE a.preferredDate < :cutoff AND a.status NOT IN :excludedStatuses")
+    List<Appointment> findByPreferredDateBeforeAndStatusNotIn(LocalDateTime cutoff, List<AppointmentStatus> excludedStatuses);
 }
