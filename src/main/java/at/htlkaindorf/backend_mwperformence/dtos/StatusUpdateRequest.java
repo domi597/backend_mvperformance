@@ -13,4 +13,7 @@ import lombok.Data;
 @Data
 public class StatusUpdateRequest {
     private AppointmentStatus status;
+
+    /** Pflichtfeld, wenn status == ABGELEHNT. Wird dem Kunden in der Absage-Mail angezeigt. */
+    private String reason;
 }

@@ -43,6 +43,9 @@ public class User {
     @Column(length = 150)
     private String street;
 
+    @Column(name = "house_number", length = 20)
+    private String houseNumber;
+
     @Column(length = 10)
     private String zip;
 

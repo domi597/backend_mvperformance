@@ -225,12 +225,18 @@ public class AppointmentService {
     }
 
     @Transactional
-    public AppointmentDTO updateStatus(Long id, AppointmentStatus status) {
+    public AppointmentDTO updateStatus(Long id, AppointmentStatus status, String reason) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Termin nicht gefunden."));
 
+        if (status == AppointmentStatus.ABGELEHNT && (reason == null || reason.isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Bitte gib einen Grund für die Ablehnung an.");
+        }
+
         AppointmentStatus oldStatus = appointment.getStatus();
         appointment.setStatus(status);
+        appointment.setRejectionReason(status == AppointmentStatus.ABGELEHNT ? reason.trim() : null);
         Appointment saved = appointmentRepository.save(appointment);
 
         if (status != AppointmentStatus.AUSSTEHEND && status != oldStatus) {

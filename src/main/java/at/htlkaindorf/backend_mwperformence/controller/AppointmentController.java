@@ -99,7 +99,7 @@ public class AppointmentController {
             @PathVariable Long id,
             @RequestBody StatusUpdateRequest request) {
         return ResponseEntity.ok(
-                appointmentService.updateStatus(id, request.getStatus()));
+                appointmentService.updateStatus(id, request.getStatus(), request.getReason()));
     }
 
     /**

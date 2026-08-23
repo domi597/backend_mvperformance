@@ -290,6 +290,9 @@ public class MailService {
         String note = (appointment.getNote() != null && !appointment.getNote().isBlank()) ? appointment.getNote() : null;
         String statusLabel = statusLabel(appointment.getStatus() != null ? appointment.getStatus().name() : "NEU");
         String introText = statusIntroText(appointment.getStatus() != null ? appointment.getStatus().name() : "NEU");
+        boolean isRejected = "ABGELEHNT".equals(appointment.getStatus() != null ? appointment.getStatus().name() : null);
+        String rejectionReason = (isRejected && appointment.getRejectionReason() != null && !appointment.getRejectionReason().isBlank())
+                ? appointment.getRejectionReason() : null;
 
         StringBuilder sb = new StringBuilder();
         sb.append("<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a;\">");
@@ -310,6 +313,9 @@ public class MailService {
         sb.append(row("Fahrzeug", vehicle));
         sb.append(row("Kennzeichen", licensePlate));
         sb.append(row("Status", statusLabel));
+        if (rejectionReason != null) {
+            sb.append(row("Ablehnungsgrund", rejectionReason));
+        }
         if (note != null) {
             sb.append(row("Anmerkung", note));
         }

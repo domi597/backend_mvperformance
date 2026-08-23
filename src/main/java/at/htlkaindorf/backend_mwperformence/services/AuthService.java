@@ -16,6 +16,7 @@ import at.htlkaindorf.backend_mwperformence.entites.Vehicle;
 import at.htlkaindorf.backend_mwperformence.exception.ApiException;
 import at.htlkaindorf.backend_mwperformence.mapper.UserMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
+import at.htlkaindorf.backend_mwperformence.util.PhoneUtils;
 import at.htlkaindorf.backend_mwperformence.repositories.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,22 +29,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
-/**
- * Service responsible for user authentication and registration.
- * Handles credential verification during login, account creation during registration,
- * and the "Passwort vergessen" flow (reset-token generation, validation and consumption).
- * On success, login/register return a signed JWT together with basic user information.
- *
- * @author Nici0211
- */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    /** Wie lange ein Passwort-Reset-Link gültig ist, bevor er abläuft. */
     private static final int RESET_TOKEN_VALID_MINUTES = 60;
 
-    /** Wie lange der E-Mail-Bestätigungscode gültig ist, bevor er abläuft. */
     private static final int VERIFICATION_CODE_VALID_MINUTES = 15;
 
     private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
@@ -55,18 +46,10 @@ public class AuthService {
     private final JwtService jwtService;
     private final MailService mailService;
 
-    /** Basis-URL des Frontends, um daraus den anklickbaren Reset-Link zu bauen. */
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    /**
-     * Authenticates a user by verifying their e-mail and password.
-     * Throws an {@link ApiException} with status {@code 404} if no account is found
-     * for the given e-mail, or {@code 401} if the password does not match.
-     *
-     * @param request the login credentials
-     * @return an {@link AuthResponse} containing a signed JWT and the user's profile data
-     */
+
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("Kein Konto mit dieser E-Mail gefunden.", HttpStatus.NOT_FOUND));
@@ -87,15 +70,6 @@ public class AuthService {
                 .build();
     }
 
-    /**
-     * Registers a new customer account with the role {@code CUSTOMER}.
-     * If {@code vehicleBrand} and {@code vehicleModel} are both provided and non-blank
-     * in the request, a {@link Vehicle} is created and linked to the new user.
-     * Throws an {@link ApiException} with status {@code 409} if the e-mail is already taken.
-     *
-     * @param request the registration data including personal details and optional vehicle information
-     * @return an {@link AuthResponse} containing a signed JWT and the newly created user's profile data
-     */
     @Transactional
     public PendingVerificationResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -109,8 +83,9 @@ public class AuthService {
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .phone(request.getPhone())
+                .phone(PhoneUtils.normalize(request.getPhone()))
                 .street(request.getStreet())
+                .houseNumber(request.getHouseNumber())
                 .zip(request.getZip())
                 .city(request.getCity())
                 .role(Role.CUSTOMER)
@@ -280,6 +255,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .street(user.getStreet())
+                .houseNumber(user.getHouseNumber())
                 .zip(user.getZip())
                 .city(user.getCity())
                 .role(user.getRole())

@@ -10,6 +10,7 @@ import at.htlkaindorf.backend_mwperformence.exception.ApiException;
 import at.htlkaindorf.backend_mwperformence.mapper.UserMapper;
 import at.htlkaindorf.backend_mwperformence.repositories.AppointmentRepository;
 import at.htlkaindorf.backend_mwperformence.repositories.UserRepository;
+import at.htlkaindorf.backend_mwperformence.util.PhoneUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -91,8 +92,9 @@ public class UserService {
         if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());
         if (dto.getLastName() != null) user.setLastName(dto.getLastName());
         if (dto.getEmail() != null) user.setEmail(dto.getEmail());
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getPhone() != null) user.setPhone(PhoneUtils.normalize(dto.getPhone()));
         if (dto.getStreet() != null) user.setStreet(dto.getStreet());
+        if (dto.getHouseNumber() != null) user.setHouseNumber(dto.getHouseNumber());
         if (dto.getZip() != null) user.setZip(dto.getZip());
         if (dto.getCity() != null) user.setCity(dto.getCity());
 

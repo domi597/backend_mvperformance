@@ -17,12 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller that exposes the authentication endpoints.
- * All routes are public (no JWT required) and live under {@code /api/auth}.
- *
- * @author Nici0211
- */
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

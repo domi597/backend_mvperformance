@@ -44,6 +44,10 @@ public class AppointmentScheduler {
         appointmentRepository.saveAll(toUpdate);
     }
 
+    /** Grund, der bei automatischer Ablehnung wegen Zeitüberschreitung im rejectionReason-Feld gespeichert wird. */
+    private static final String EXPIRED_REJECTION_REASON =
+            "Automatisch abgelehnt: Der gewünschte Termin ist verstrichen, ohne rechtzeitig bearbeitet worden zu sein.";
+
     @Scheduled(cron = "0 * * * * *")
     public void autoRejectExpiredAppointments() {
         LocalDateTime now = LocalDateTime.now();
@@ -53,6 +57,7 @@ public class AppointmentScheduler {
 
         for (Appointment appointment : expired) {
             appointment.setStatus(AppointmentStatus.ABGELEHNT);
+            appointment.setRejectionReason(EXPIRED_REJECTION_REASON);
             appointmentRepository.save(appointment);
             mailService.sendAppointmentExpiredRejection(appointment);
         }

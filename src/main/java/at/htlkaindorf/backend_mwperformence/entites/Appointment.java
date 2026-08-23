@@ -49,6 +49,9 @@ public class Appointment {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @ToString.Exclude
