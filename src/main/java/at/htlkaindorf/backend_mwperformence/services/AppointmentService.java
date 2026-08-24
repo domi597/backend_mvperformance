@@ -119,8 +119,6 @@ public class AppointmentService {
             appointment.setVehicleEntity(v);
             appointment.setVehicle(v.getBrand() + " " + v.getModel() + " " + v.getBuildYear());
         } else if (dto.getLicensePlate() != null) {
-            // Kunde hat ein neues Fahrzeug manuell eingegeben – wird gesucht/angelegt
-            // und dabei automatisch im Konto des Kunden gespeichert.
             String normalizedPlate = Vehicle.normalize(dto.getLicensePlate());
             var v = vehicleRepository.findByLicensePlate(normalizedPlate)
                     .orElseGet(() -> vehicleRepository.save(Vehicle.builder()
@@ -198,6 +196,7 @@ public class AppointmentService {
         Appointment saved = appointmentRepository.save(appointment);
 
         mailService.sendAppointmentConfirmation(saved);
+        mailService.sendNewAppointmentAdminNotification(saved);
 
         return appointmentMapper.toDto(saved);
     }

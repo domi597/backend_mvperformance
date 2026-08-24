@@ -48,7 +48,7 @@ public class AppointmentScheduler {
     private static final String EXPIRED_REJECTION_REASON =
             "Automatisch abgelehnt: Der gewünschte Termin ist verstrichen, ohne rechtzeitig bearbeitet worden zu sein.";
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void autoRejectExpiredAppointments() {
         LocalDateTime now = LocalDateTime.now();
 
